@@ -668,7 +668,7 @@ with tabs[6]:
   col_p, col_t = st.columns([1.5, 1])
 
   with col_p:
-    st.markdown("##### Vehicles produced vs registrations nacionais (nº unidades, 2024)")
+    st.markdown("##### Vehicles produced vs domestic registrations — 2024 (units)")
     n_prod = st.slider("Show top N producers", 5, len(prod), min(12, len(prod)))
     prod_top = prod.head(n_prod)
 
@@ -759,7 +759,7 @@ The interactive charts below use <strong>illustrative estimates</strong> based o
       "SUV":     {"Reliability":72,"Space/family":70,"Brand":58,"Safety":55,"Design":48,"Green/EV":30},
       "Small":    {"Running costs":82,"Price":78,"Reliability":65,"Urban ease":60,"Design":35,"Green/EV":28},
       "Medium":    {"Reliability":76,"Running costs":68,"Brand":55,"Safety":50,"Design":44,"Green/EV":35},
-      "Luxury":    {"Marca":85,"Design":80,"Performance":75,"Prestige":70,"Technology":65,"Green/EV":40},
+      "Luxury":    {"Brand":85,"Design":80,"Performance":75,"Prestige":70,"Technology":65,"Green/EV":40},
       "MPV":     {"Space/family":88,"Reliability":75,"Running costs":65,"Safety":60,"Brand":42,"Green/EV":25},
     }
     md = motiv_data.get(demo_segment, motiv_data["All segments"])
