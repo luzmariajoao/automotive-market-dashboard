@@ -14,15 +14,11 @@ import streamlit as st
 import plotly.express as px
 import plotly.graph_objects as go
 import pandas as pd
-from data_embedded import get_registrations_per_capita as _get_ratio
-
-def get_ratio_data():
-    return _get_ratio()
-
 from loader import (
     load_sales_by_country, load_top_brands, load_top_models,
     load_manufacturer_groups, load_fuel_type_mix, load_segment_share,
     load_co2_by_country, load_production_by_country, build_yoy_comparison,
+    load_ratio_per_capita,
 )
 
 st.set_page_config(
@@ -108,7 +104,7 @@ def get_data():
         "yoy": yoy,
         "grp24": load_manufacturer_groups(2024),
         "grp25": load_manufacturer_groups(2025),
-        "ratio": get_ratio_data(),
+        "ratio": load_ratio_per_capita(),
     }
 
 D = get_data()
