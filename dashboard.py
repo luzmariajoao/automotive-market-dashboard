@@ -1,6 +1,6 @@
 """
-European Car Market — Strategic Intelligence Report
-Prepared for executive review | Source: ACEA, JATO Dynamics, S&P Global Mobility
+European Car Market — Interactive Strategic Dashboard
+Source: ACEA, JATO Dynamics, S&P Global Mobility 2024/2025
 """
 import sys
 from pathlib import Path
@@ -21,105 +21,54 @@ from loader import (
 )
 
 st.set_page_config(
-    page_title="EU Car Market — Strategic Report",
-    page_icon="📊",
+    page_title="EU Car Market — Interactive Dashboard",
+    page_icon="🚗",
     layout="wide",
     initial_sidebar_state="expanded",
 )
 
-BLUE  = "#185FA5"
-TEAL  = "#1D9E75"
-CORAL = "#D85A30"
-AMBER = "#BA7517"
-GRAY  = "#888780"
-LGRAY = "#f0f0f0"
-COLORS = [BLUE, TEAL, CORAL, AMBER, "#534AB7", "#993556", "#3B6D11", "#854F0B", "#A32D2D", "#0F6E56"]
+# ── Palette ───────────────────────────────────────────────────────────────────
+BLUE  = "#185FA5"; TEAL = "#1D9E75"; CORAL = "#D85A30"
+AMBER = "#BA7517"; GRAY = "#888780"; LGRAY = "#f0f0f0"
+COLORS = [BLUE, TEAL, CORAL, AMBER, "#534AB7", "#993556",
+          "#3B6D11", "#854F0B", "#A32D2D", "#0F6E56"]
 
 st.markdown("""
 <style>
-.report-title{font-size:26px;font-weight:700;color:#0d1b2a;margin:0}
-.report-sub{font-size:14px;color:#888;margin-top:4px}
-.section-hd{font-size:18px;font-weight:600;color:#0d1b2a;border-left:4px solid #185FA5;padding-left:10px;margin:4px 0 2px}
+.report-title{font-size:24px;font-weight:700;color:#0d1b2a}
+.section-hd{font-size:16px;font-weight:600;color:#0d1b2a;
+  border-left:4px solid #185FA5;padding-left:10px;margin:4px 0 12px}
 .kpi-card{background:#f9f9f9;border-radius:8px;padding:14px 16px;border:0.5px solid #e0e0e0}
 .kpi-lbl{font-size:12px;color:#888;margin-bottom:2px}
 .kpi-val{font-size:26px;font-weight:700;color:#0d1b2a;line-height:1.1}
-.kpi-delta-up{font-size:12px;color:#1D9E75;margin-top:2px}
-.kpi-delta-dn{font-size:12px;color:#D85A30;margin-top:2px}
-.kpi-ctx{font-size:11px;color:#aaa;margin-top:2px}
-.insight-box{background:#EAF3DE;border-left:4px solid #1D9E75;padding:12px 16px;border-radius:4px;margin-bottom:8px}
-.insight-lbl{font-size:11px;font-weight:600;color:#3B6D11;letter-spacing:.06em;text-transform:uppercase}
+.kpi-up{font-size:12px;color:#1D9E75;margin-top:2px}
+.kpi-dn{font-size:12px;color:#D85A30;margin-top:2px}
+.kpi-ctx{font-size:11px;color:#aaa}
+.insight-box{background:#EAF3DE;border-left:4px solid #1D9E75;
+  padding:12px 16px;border-radius:4px;margin-bottom:8px}
+.insight-lbl{font-size:11px;font-weight:600;color:#3B6D11;
+  letter-spacing:.06em;text-transform:uppercase}
 .insight-txt{font-size:13px;color:#27500A;margin-top:4px;line-height:1.5}
-.warn-box{background:#FAEEDA;border-left:4px solid #BA7517;padding:12px 16px;border-radius:4px;margin-bottom:8px}
-.warn-lbl{font-size:11px;font-weight:600;color:#854F0B;letter-spacing:.06em;text-transform:uppercase}
+.warn-box{background:#FAEEDA;border-left:4px solid #BA7517;
+  padding:12px 16px;border-radius:4px;margin-bottom:8px}
+.warn-lbl{font-size:11px;font-weight:600;color:#854F0B;
+  letter-spacing:.06em;text-transform:uppercase}
 .warn-txt{font-size:13px;color:#633806;margin-top:4px;line-height:1.5}
-.risk-box{background:#FCEBEB;border-left:4px solid #D85A30;padding:12px 16px;border-radius:4px;margin-bottom:8px}
-.risk-lbl{font-size:11px;font-weight:600;color:#A32D2D;letter-spacing:.06em;text-transform:uppercase}
+.risk-box{background:#FCEBEB;border-left:4px solid #D85A30;
+  padding:12px 16px;border-radius:4px;margin-bottom:8px}
+.risk-lbl{font-size:11px;font-weight:600;color:#A32D2D;
+  letter-spacing:.06em;text-transform:uppercase}
 .risk-txt{font-size:13px;color:#791F1F;margin-top:4px;line-height:1.5}
-.spg-box{background:#f0f4fa;border:1px solid #b5d4f4;border-radius:8px;padding:20px 24px}
-.spg-title{font-size:16px;font-weight:600;color:#185FA5}
-.spg-body{font-size:13px;color:#444;margin-top:8px;line-height:1.7}
+.filter-label{font-size:12px;font-weight:600;color:#555;
+  text-transform:uppercase;letter-spacing:.05em;margin-bottom:4px}
 .data-note{font-size:11px;color:#bbb;margin-top:4px}
+.spg-box{background:#f0f4fa;border:1px solid #b5d4f4;border-radius:8px;padding:20px 24px}
+.spg-title{font-size:15px;font-weight:600;color:#185FA5}
+.spg-body{font-size:13px;color:#444;margin-top:8px;line-height:1.7}
 [data-testid="stSidebar"]{background:#0d1b2a !important}
 [data-testid="stSidebar"] *{color:#e0e6ed !important}
 </style>
 """, unsafe_allow_html=True)
-
-@st.cache_data
-def load_all():
-    return {
-        "c24": load_sales_by_country(2024),
-        "c25": load_sales_by_country(2025),
-        "b24": load_top_brands(2024),
-        "b25": load_top_brands(2025),
-        "mod": load_top_models(),
-        "fuel": load_fuel_type_mix(),
-        "seg": load_segment_share(),
-        "co2": load_co2_by_country(),
-        "prod": load_production_by_country(),
-        "yoy": build_yoy_comparison(),
-        "grp24": load_manufacturer_groups(2024),
-        "grp25": load_manufacturer_groups(2025),
-    }
-
-D = load_all()
-
-def kpi(label, value, delta, delta_up, context=""):
-    dc = "kpi-delta-up" if delta_up else "kpi-delta-dn"
-    arrow = "▲" if delta_up else "▼"
-    ctx = f'<div class="kpi-ctx">{context}</div>' if context else ""
-    return f'<div class="kpi-card"><div class="kpi-lbl">{label}</div><div class="kpi-val">{value}</div><div class="{dc}">{arrow} {delta}</div>{ctx}</div>'
-
-def insight(text):
-    st.markdown(f'<div class="insight-box"><div class="insight-lbl">Strategic Insight</div><div class="insight-txt">{text}</div></div>', unsafe_allow_html=True)
-
-def warning(text):
-    st.markdown(f'<div class="warn-box"><div class="warn-lbl">Watch</div><div class="warn-txt">{text}</div></div>', unsafe_allow_html=True)
-
-def risk(text):
-    st.markdown(f'<div class="risk-box"><div class="risk-lbl">Risk</div><div class="risk-txt">{text}</div></div>', unsafe_allow_html=True)
-
-with st.sidebar:
-    st.markdown("### 📊 Navigation")
-    section = st.radio("", [
-        "Executive Summary",
-        "1. Market Overview",
-        "2. Growth Markets",
-        "3. Brand & Model Landscape",
-        "4. Technology Transition",
-        "5. Competitive Positioning",
-        "6. Buyer Intelligence",
-    ], label_visibility="collapsed")
-    st.markdown("---")
-    st.markdown("**Report scope**")
-    st.markdown("- 31 European markets\n- Full-year 2024 & 2025\n- Q1 2026 snapshot")
-    st.markdown("---")
-    st.markdown("**Data sources**")
-    st.markdown("ACEA · JATO Dynamics\nS&P Global Mobility\nICCT / EEA")
-    st.markdown("---")
-    st.caption("Prepared by Maria João Luz\nmariajoaoluz.com")
-
-st.markdown('<div class="report-title">European Car Market — Strategic Intelligence Report</div><div class="report-sub">Full-year 2024 & 2025 · 31 markets · Prepared for executive review</div>', unsafe_allow_html=True)
-st.divider()
 
 ISO = {
     "Austria":"AUT","Belgium":"BEL","Bulgaria":"BGR","Croatia":"HRV","Cyprus":"CYP",
@@ -131,118 +80,263 @@ ISO = {
     "United Kingdom":"GBR",
 }
 
-# ── EXECUTIVE SUMMARY ────────────────────────────────────────────────────────
-if section == "Executive Summary":
-    st.markdown('<div class="section-hd">Executive Summary</div>', unsafe_allow_html=True)
-    st.markdown("<br>", unsafe_allow_html=True)
+# ── Load data ─────────────────────────────────────────────────────────────────
+@st.cache_data
+def get_data():
+    c24 = load_sales_by_country(2024)
+    c25 = load_sales_by_country(2025)
+    yoy = build_yoy_comparison()
+    yoy["sales_col"] = yoy["sales_2025"]
+    co2 = load_co2_by_country()
+    c25_ext = c25.merge(
+        co2[["country","co2_gkm_2024","bev_share_pct_2024"]],
+        on="country", how="left"
+    )
+    return {
+        "c24": c24, "c25": c25, "c25_ext": c25_ext,
+        "b24": load_top_brands(2024), "b25": load_top_brands(2025),
+        "mod": load_top_models(),
+        "fuel": load_fuel_type_mix(),
+        "seg": load_segment_share(),
+        "co2": co2,
+        "prod": load_production_by_country(),
+        "yoy": yoy,
+        "grp24": load_manufacturer_groups(2024),
+        "grp25": load_manufacturer_groups(2025),
+    }
 
-    t24 = D["c24"]["sales_2024"].sum()
-    t25 = D["c25"]["sales_2025"].sum()
-    delta = (t25 - t24) / t24 * 100
+D = get_data()
 
-    k1, k2, k3, k4 = st.columns(4)
-    with k1:
-        st.markdown(kpi("Total market 2025", f"{t25/1e6:.2f}M", f"{delta:.1f}% vs 2024", True, "First time above 13M since 2019"), unsafe_allow_html=True)
-    with k2:
-        st.markdown(kpi("Fastest growing large market", "Spain", "+12.9% in 2025", True, "2nd consecutive double-digit year"), unsafe_allow_html=True)
-    with k3:
-        st.markdown(kpi("BEV share EU 2024", "13.6%", "vs 14.6% in 2023", False, "First-ever decline — regulatory inflection"), unsafe_allow_html=True)
-    with k4:
-        st.markdown(kpi("Portugal 2025", "225K", "+7.3% vs 2024", True, "Above EU average growth (+2.4%)"), unsafe_allow_html=True)
+def kpi(label, value, delta, up, ctx=""):
+    dc = "kpi-up" if up else "kpi-dn"
+    a = "▲" if up else "▼"
+    c = f'<div class="kpi-ctx">{ctx}</div>' if ctx else ""
+    return f'<div class="kpi-card"><div class="kpi-lbl">{label}</div><div class="kpi-val">{value}</div><div class="{dc}">{a} {delta}</div>{c}</div>'
 
-    st.markdown("<br>", unsafe_allow_html=True)
-    c1, c2 = st.columns(2)
+def insight(t):
+    st.markdown(f'<div class="insight-box"><div class="insight-lbl">Strategic Insight</div><div class="insight-txt">{t}</div></div>', unsafe_allow_html=True)
 
-    with c1:
-        st.markdown("#### Key findings for the business")
-        insight("The European market has recovered to 13.3M units in 2025 — its strongest since 2019. However, growth is uneven: Spain and Poland are accelerating while France and Italy contract. Brands with strong southern European exposure are best positioned.")
-        insight("Dacia Sandero became Europe's #1 model for the first time ever in 2024, dethroning VW Golf after decades. The value segment is winning. Consumers are prioritising affordability over premium — pressure on margin strategies.")
-        warning("BEV share fell for the first time in history in 2024 (13.6% vs 14.6%), driven by Germany's 27% collapse after subsidy cancellation. The 2025 EU CO₂ targets (93.6 g/km) create compliance risk for OEMs still dependent on ICE volume.")
+def warning(t):
+    st.markdown(f'<div class="warn-box"><div class="warn-lbl">Watch</div><div class="warn-txt">{t}</div></div>', unsafe_allow_html=True)
 
-    with c2:
-        st.markdown("#### Competitive landscape shifts")
-        insight("VW Group consolidated leadership to 26.9% market share in 2025. Skoda entered the top-2 brands for the first time ever in Q1 2026, surpassing Toyota. Within our competitive set, this signals growing pressure in the C-segment.")
-        risk("Tesla's sales collapsed -26.6% in 2025 — the sharpest fall of any major brand. Traditional OEMs are recovering EV ground. This creates both opportunity (loyalty recapture) and risk (pricing pressure in BEV segment).")
-        risk("Chinese brands (BYD, SAIC/MG) grew +270% and +5.1% respectively in 2025. Their market share remains small but trajectory is steep. Southern European markets — particularly Spain and Portugal — are highest-exposure entry points for Chinese volume brands.")
+def risk(t):
+    st.markdown(f'<div class="risk-box"><div class="risk-lbl">Risk</div><div class="risk-txt">{t}</div></div>', unsafe_allow_html=True)
 
-    st.divider()
-    st.markdown("#### Recommended focus areas")
-    r1, r2, r3 = st.columns(3)
-    with r1:
-        st.info("**Iberian growth**\nSpain and Portugal both outpacing EU average. Review network capacity and model mix for these markets.")
-    with r2:
-        st.warning("**EV transition timeline**\nBEV stall vs regulatory targets creates a compliance gap. Assess our OEM partners' compliance trajectories.")
-    with r3:
-        st.error("**Chinese brand monitoring**\nSet up systematic tracking of BYD and MG penetration in our key markets. Early warning system needed.")
+# ── Session state ─────────────────────────────────────────────────────────────
+if "selected_brand" not in st.session_state:
+    st.session_state.selected_brand = "Volkswagen"
+if "compare_a" not in st.session_state:
+    st.session_state.compare_a = "Germany"
+if "compare_b" not in st.session_state:
+    st.session_state.compare_b = "Portugal"
 
-# ── MARKET OVERVIEW ───────────────────────────────────────────────────────────
-elif section == "1. Market Overview":
-    st.markdown('<div class="section-hd">1. Market Overview</div>', unsafe_allow_html=True)
+# ── Sidebar — Global Filters ──────────────────────────────────────────────────
+with st.sidebar:
+    st.markdown("### 🚗 EU Car Market")
+    st.markdown("---")
 
-    t24 = D["c24"]["sales_2024"].sum()
-    t25 = D["c25"]["sales_2025"].sum()
-    delta = (t25 - t24) / t24 * 100
+    st.markdown('<div class="filter-label">Year</div>', unsafe_allow_html=True)
+    year = st.radio("", [2024, 2025], index=1, horizontal=True, label_visibility="collapsed")
 
-    def _get(df, country, col):
-        row = df[df["country"] == country]
-        return row[col].values[0] if len(row) else 0
+    st.markdown('<div class="filter-label">Region</div>', unsafe_allow_html=True)
+    region_filter = st.selectbox("", ["All regions", "EU only", "EFTA only", "UK only"], label_visibility="collapsed")
 
-    k1, k2, k3, k4, k5 = st.columns(5)
-    with k1:
-        st.markdown(kpi("EU+EFTA+UK 2025", f"{t25/1e6:.2f}M", f"{delta:.1f}% YoY", True), unsafe_allow_html=True)
-    with k2:
-        v = _get(D["c25"],"Portugal","sales_2025"); d = _get(D["c25"],"Portugal","pct_change")
-        st.markdown(kpi("Portugal 2025", f"{v/1e3:.0f}K", f"{d:+.1f}% YoY", d>0, "Above EU average"), unsafe_allow_html=True)
-    with k3:
-        v = _get(D["c25"],"Germany","sales_2025"); d = _get(D["c25"],"Germany","pct_change")
-        st.markdown(kpi("Germany 2025", f"{v/1e6:.2f}M", f"{d:+.1f}% YoY", d>0, "#1 market — 21% of EU"), unsafe_allow_html=True)
-    with k4:
-        v = _get(D["c25"],"Spain","sales_2025"); d = _get(D["c25"],"Spain","pct_change")
-        st.markdown(kpi("Spain 2025", f"{v/1e6:.2f}M", f"{d:+.1f}% YoY", True, "Fastest growing top-5"), unsafe_allow_html=True)
-    with k5:
-        v = _get(D["c25"],"France","sales_2025"); d = _get(D["c25"],"France","pct_change")
-        st.markdown(kpi("France 2025", f"{v/1e6:.2f}M", f"{d:+.1f}% YoY", False, "Structural contraction"), unsafe_allow_html=True)
+    df_raw = D["c25"] if year == 2025 else D["c24"]
+    sales_col = "sales_2025" if year == 2025 else "sales_2024"
 
-    st.markdown("<br>", unsafe_allow_html=True)
-    col_map, col_ins = st.columns([1.6, 1])
+    if region_filter == "EU only":
+        df_raw = df_raw[df_raw["region"] == "EU"]
+    elif region_filter == "EFTA only":
+        df_raw = df_raw[df_raw["region"] == "EFTA"]
+    elif region_filter == "UK only":
+        df_raw = df_raw[df_raw["region"] == "UK"]
 
-    with col_map:
-        map_df = D["c25"].copy()
-        map_df["iso"] = map_df["country"].map(ISO)
-        map_df = map_df.dropna(subset=["iso"])
-        fig = px.choropleth(map_df, locations="iso", color="sales_2025",
-            hover_name="country",
-            hover_data={"sales_2025":":,.0f","pct_change":":.1f","iso":False},
-            color_continuous_scale=[[0,"#E6F1FB"],[0.25,"#85B7EB"],[0.6,"#378ADD"],[1,"#042C53"]],
-            scope="europe", labels={"sales_2025":"Sales 2025","pct_change":"YoY %"},
-            title="New car registrations — 2025")
-        fig.update_layout(margin=dict(l=0,r=0,t=40,b=0), height=420,
-            coloraxis_colorbar=dict(title="Units",tickformat=".2s",len=0.7),
-            geo=dict(showframe=False,showcoastlines=False,bgcolor="rgba(0,0,0,0)",projection_scale=1.35,center=dict(lat=54,lon=14)),
-            paper_bgcolor="rgba(0,0,0,0)", title_font_size=14)
+    st.markdown('<div class="filter-label">Countries</div>', unsafe_allow_html=True)
+    all_countries = sorted(df_raw["country"].tolist())
+    selected_countries = st.multiselect("", all_countries, default=all_countries, label_visibility="collapsed")
+
+    if not selected_countries:
+        selected_countries = all_countries
+
+    df = df_raw[df_raw["country"].isin(selected_countries)].copy()
+
+    st.markdown('<div class="filter-label">Top N markets</div>', unsafe_allow_html=True)
+    top_n = st.slider("", 5, 31, 15, label_visibility="collapsed")
+
+    st.markdown("---")
+    st.markdown("**Data sources**")
+    st.markdown("ACEA · JATO Dynamics\nS&P Global Mobility\nICCT / EEA")
+    st.markdown("---")
+    st.caption("Maria João Luz · mariajoaoluz.com")
+
+# ── Header ────────────────────────────────────────────────────────────────────
+st.markdown(f'<div class="report-title">🚗 European Car Market — {year}</div>', unsafe_allow_html=True)
+st.markdown(f"**{len(selected_countries)} markets selected · {region_filter} · Source: ACEA / JATO / S&P Global Mobility**")
+st.divider()
+
+# ── KPIs ──────────────────────────────────────────────────────────────────────
+total = df[sales_col].sum()
+prev_col = "sales_2024" if year == 2025 else "sales_2023"
+if prev_col in df.columns:
+    prev = df[prev_col].sum()
+    delta_total = (total - prev) / prev * 100
+else:
+    delta_total = 2.4
+
+top_country = df.nlargest(1, sales_col).iloc[0]
+top_brand = D["b25"].iloc[0] if year == 2025 else D["b24"].iloc[0]
+bev = D["fuel"][D["fuel"]["year"] == year]["bev_pct"].values[0] if year in D["fuel"]["year"].values else 13.6
+
+k1, k2, k3, k4, k5 = st.columns(5)
+with k1: st.markdown(kpi(f"Total sales {year}", f"{total/1e6:.2f}M", f"{delta_total:.1f}% YoY", delta_total>0), unsafe_allow_html=True)
+with k2: st.markdown(kpi("Largest market", top_country["country"], f"{top_country[sales_col]/1e6:.2f}M units", True), unsafe_allow_html=True)
+with k3: st.markdown(kpi("Top brand", top_brand["brand"], f"{top_brand[f'sales_{year}']/1e6:.2f}M units", True), unsafe_allow_html=True)
+with k4: st.markdown(kpi("BEV share EU", f"{bev}%", "of all new cars", bev > 13), unsafe_allow_html=True)
+with k5:
+    pt = df[df["country"]=="Portugal"]
+    if len(pt):
+        pv = pt[sales_col].values[0]
+        st.markdown(kpi("Portugal", f"{pv/1e3:.0f}K", f"{pt['pct_change'].values[0]:+.1f}% YoY" if "pct_change" in pt.columns else "+7.3% YoY", True), unsafe_allow_html=True)
+    else:
+        st.markdown(kpi("Markets selected", f"{len(selected_countries)}", f"of 31 total", True), unsafe_allow_html=True)
+
+st.divider()
+
+# ── Tabs ──────────────────────────────────────────────────────────────────────
+tabs = st.tabs([
+    "🗺️ Market Map",
+    "📊 Rankings",
+    "🔄 YoY Evolution",
+    "🏎️ Brand Drill-down",
+    "⚖️ Country Comparison",
+    "⚡ Technology",
+    "🏭 Production",
+    "👥 Demographics",
+    "📋 Executive Summary",
+])
+
+# ── TAB 1: MAP ────────────────────────────────────────────────────────────────
+with tabs[0]:
+    st.markdown('<div class="section-hd">Market Map</div>', unsafe_allow_html=True)
+
+    col_ctrl, _ = st.columns([1, 2])
+    with col_ctrl:
+        map_metric = st.selectbox("Map metric", [
+            "Sales volume",
+            "YoY change (%)",
+            "CO₂ emissions (g/km)",
+            "BEV share (%)",
+            "Cars per 1,000 inhabitants",
+        ])
+
+    map_df = D["c25_ext"].copy()
+    map_df["iso"] = map_df["country"].map(ISO)
+    map_df = map_df.merge(
+        D["co2"][["country","co2_gkm_2024","bev_share_pct_2024"]], on="country", how="left",
+        suffixes=("","_y")
+    )
+    from loader import load_cars_per_1000
+    c1k = load_cars_per_1000()
+    map_df = map_df.merge(c1k[["country","cars_per_1000"]], on="country", how="left")
+
+    if map_metric == "Sales volume":
+        color_col = "sales_2025"; title = f"New car registrations {year}"; fmt = ":,.0f"
+        scale = [[0,"#E6F1FB"],[0.25,"#85B7EB"],[0.6,"#378ADD"],[1,"#042C53"]]
+    elif map_metric == "YoY change (%)":
+        color_col = "pct_change"; title = "YoY change 2024→2025 (%)"; fmt = ":+.1f"
+        scale = [[0,"#D85A30"],[0.5,"#f5f5f5"],[1,"#1D9E75"]]
+    elif map_metric == "CO₂ emissions (g/km)":
+        color_col = "co2_gkm_2024_y" if "co2_gkm_2024_y" in map_df.columns else "co2_gkm_2024"
+        title = "Average CO₂ g/km (2024)"; fmt = ":.1f"
+        scale = [[0,"#1D9E75"],[0.5,"#FAEEDA"],[1,"#D85A30"]]
+    elif map_metric == "BEV share (%)":
+        color_col = "bev_share_pct_2024_y" if "bev_share_pct_2024_y" in map_df.columns else "bev_share_pct_2024"
+        title = "BEV market share % (2024)"; fmt = ":.1f"
+        scale = [[0,"#f5f5f5"],[0.5,"#85B7EB"],[1,"#042C53"]]
+    else:
+        color_col = "cars_per_1000"; title = "New cars per 1,000 inhabitants (2024)"; fmt = ":.0f"
+        scale = [[0,"#E6F1FB"],[1,"#042C53"]]
+
+    map_plot = map_df.dropna(subset=["iso", color_col])
+    fig_map = px.choropleth(
+        map_plot, locations="iso", color=color_col,
+        hover_name="country",
+        hover_data={color_col: fmt, "iso": False},
+        color_continuous_scale=scale,
+        scope="europe", title=title,
+    )
+    fig_map.update_layout(
+        margin=dict(l=0,r=0,t=40,b=0), height=480,
+        geo=dict(showframe=False, showcoastlines=False,
+                 bgcolor="rgba(0,0,0,0)", projection_scale=1.4,
+                 center=dict(lat=54,lon=14)),
+        paper_bgcolor="rgba(0,0,0,0)",
+        title_font_size=14,
+        coloraxis_colorbar=dict(title="", tickformat=".2s", len=0.7),
+    )
+    st.plotly_chart(fig_map, use_container_width=True)
+
+# ── TAB 2: RANKINGS ───────────────────────────────────────────────────────────
+with tabs[1]:
+    st.markdown('<div class="section-hd">Market Rankings</div>', unsafe_allow_html=True)
+
+    col_r1, col_r2 = st.columns(2)
+
+    with col_r1:
+        st.markdown(f"##### Top {top_n} countries by sales — {year}")
+        top = df.nlargest(top_n, sales_col).sort_values(sales_col)
+        fig = go.Figure(go.Bar(
+            x=top[sales_col], y=top["country"], orientation="h",
+            marker_color=[CORAL if c == "Portugal" else (AMBER if c == "Spain" else BLUE)
+                          for c in top["country"]],
+            text=top[sales_col].apply(lambda x: f"{x:,.0f}"),
+            textposition="outside", textfont=dict(size=9),
+        ))
+        fig.update_layout(height=max(300, top_n*22),
+            margin=dict(l=0,r=80,t=10,b=10),
+            xaxis=dict(tickformat=".2s", gridcolor=LGRAY),
+            paper_bgcolor="rgba(0,0,0,0)", plot_bgcolor="rgba(0,0,0,0)",
+            font=dict(size=11))
         st.plotly_chart(fig, use_container_width=True)
 
-    with col_ins:
-        st.markdown("#### What the map tells us")
-        insight("Germany, UK, France and Italy account for 61% of all European sales. But the growth story is in the periphery — Spain, Poland, and Iberia broadly are taking market share from the stagnating core.")
-        warning("Estonia showed a -48.6% collapse in 2025 — driven by subsidy removal. This is a leading indicator of what happens when EV incentives are withdrawn abruptly.")
-        top5 = D["c25"].nlargest(5,"sales_2025")[["country","sales_2025","pct_change"]].copy()
-        top5.columns = ["Country","Sales 2025","YoY %"]
-        top5["Sales 2025"] = top5["Sales 2025"].apply(lambda x: f"{x:,.0f}")
-        top5["YoY %"] = top5["YoY %"].apply(lambda x: f"{x:+.1f}%")
-        st.markdown("**Top 5 markets**")
-        st.dataframe(top5, hide_index=True, use_container_width=True)
+    with col_r2:
+        st.markdown(f"##### Top 10 brands — {year}")
+        brands = D["b25"] if year == 2025 else D["b24"]
+        bc = f"sales_{year}"
+        if bc not in brands.columns:
+            bc = [c for c in brands.columns if c.startswith("sales_")][0]
+        brands_s = brands.sort_values(bc)
+        fig = go.Figure(go.Bar(
+            x=brands_s[bc], y=brands_s["brand"], orientation="h",
+            marker_color=COLORS[:10][::-1][:len(brands_s)],
+            text=brands_s[bc].apply(lambda x: f"{x/1e3:.0f}K"),
+            textposition="outside", textfont=dict(size=9),
+        ))
+        fig.update_layout(height=320,
+            margin=dict(l=0,r=60,t=10,b=10),
+            xaxis=dict(tickformat=".2s", gridcolor=LGRAY),
+            paper_bgcolor="rgba(0,0,0,0)", plot_bgcolor="rgba(0,0,0,0)",
+            font=dict(size=11))
+        st.plotly_chart(fig, use_container_width=True)
 
-# ── GROWTH MARKETS ────────────────────────────────────────────────────────────
-elif section == "2. Growth Markets":
-    st.markdown('<div class="section-hd">2. Growth Markets — 2025 vs 2024</div>', unsafe_allow_html=True)
+        st.markdown("##### Top 10 models — 2024")
+        tbl = D["mod"][["rank","model","brand","fuel_type"]].copy()
+        tbl.columns = ["#","Model","Brand","Fuel"]
+        st.dataframe(tbl, hide_index=True, use_container_width=True, height=280)
 
-    yoy = D["yoy"].dropna(subset=["pct_change"]).copy()
+# ── TAB 3: YOY EVOLUTION ─────────────────────────────────────────────────────
+with tabs[2]:
+    st.markdown('<div class="section-hd">Year-on-Year Evolution</div>', unsafe_allow_html=True)
+
+    yoy = D["yoy"][D["yoy"]["country"].isin(selected_countries)].dropna(subset=["pct_change"]).copy()
     yoy = yoy.sort_values("pct_change")
 
+    highlight = st.multiselect("Highlight countries", sorted(yoy["country"].tolist()),
+                               default=["Portugal","Spain","Germany"])
+
     def bar_color(row):
-        if row["country"] == "Portugal": return CORAL
-        if row["country"] == "Spain": return AMBER
+        if row["country"] in highlight:
+            return CORAL if row["pct_change"] < 0 else AMBER
         return TEAL if row["pct_change"] >= 0 else "#E0E0E0"
 
     yoy["color"] = yoy.apply(bar_color, axis=1)
@@ -255,237 +349,361 @@ elif section == "2. Growth Markets":
         customdata=yoy[["sales_2025","sales_2024"]].values,
         hovertemplate="<b>%{y}</b><br>Change: %{x:+.1f}%<br>2025: %{customdata[0]:,.0f}<br>2024: %{customdata[1]:,.0f}<extra></extra>",
     ))
-    fig.add_vline(x=2.4, line_dash="dash", line_color=BLUE, line_width=1.5,
+    fig.add_vline(x=2.4, line_dash="dash", line_color=BLUE,
         annotation_text="EU avg +2.4%", annotation_font=dict(size=10, color=BLUE))
     fig.add_vline(x=0, line_color=GRAY, line_width=0.8)
-    fig.update_layout(height=600, margin=dict(l=0,r=70,t=30,b=10),
+    fig.update_layout(
+        height=max(400, len(yoy)*18),
+        margin=dict(l=0,r=70,t=30,b=10),
         xaxis=dict(title="% change vs 2024", gridcolor=LGRAY, zeroline=False),
         yaxis=dict(tickfont=dict(size=10)),
         paper_bgcolor="rgba(0,0,0,0)", plot_bgcolor="rgba(0,0,0,0)", font=dict(size=11))
+    st.plotly_chart(fig, use_container_width=True)
 
-    col_chart, col_ins = st.columns([1.5, 1])
-    with col_chart:
-        st.plotly_chart(fig, use_container_width=True)
-    with col_ins:
-        st.markdown("#### Strategic reading")
-        insight("**Portugal (+7.3%) and Spain (+12.9%)** both outperformed the EU average (+2.4%) by a wide margin. The Iberian Peninsula is the strongest growth corridor in Western Europe.")
-        insight("**Norway (+39.4%) and Lithuania (+39.3%)** are structural BEV-driven growth markets. Norway's near-100% EV penetration creates a template for what mature electrification looks like.")
-        warning("**France (-5.0%) and Italy (-2.1%)** — the 2nd and 4th largest markets — contracted. Over-exposure to these markets without offsetting Iberian growth creates portfolio risk.")
-        risk("**Estonia (-48.6%)** is a stark reminder: subsidy-driven EV booms collapse fast. Markets with high incentive dependency need scenario planning.")
+# ── TAB 4: BRAND DRILL-DOWN ───────────────────────────────────────────────────
+with tabs[3]:
+    st.markdown('<div class="section-hd">Brand Drill-down</div>', unsafe_allow_html=True)
 
-# ── BRAND & MODEL LANDSCAPE ───────────────────────────────────────────────────
-elif section == "3. Brand & Model Landscape":
-    st.markdown('<div class="section-hd">3. Brand & Model Landscape</div>', unsafe_allow_html=True)
+    all_brands = D["b25"]["brand"].tolist()
+    selected_brand = st.selectbox("Select brand", all_brands,
+        index=all_brands.index(st.session_state.selected_brand)
+        if st.session_state.selected_brand in all_brands else 0)
+    st.session_state.selected_brand = selected_brand
 
-    col_b, col_m = st.columns(2)
+    b25_row = D["b25"][D["b25"]["brand"] == selected_brand].iloc[0] if len(D["b25"][D["b25"]["brand"] == selected_brand]) else None
+    b24_row = D["b24"][D["b24"]["brand"] == selected_brand].iloc[0] if len(D["b24"][D["b24"]["brand"] == selected_brand]) else None
+
+    if b25_row is not None:
+        c1, c2, c3, c4 = st.columns(4)
+        with c1: st.markdown(kpi("Sales 2025", f"{b25_row['sales_2025']/1e3:.0f}K", f"{b25_row['pct_change']:+.1f}% vs 2024", b25_row['pct_change']>0), unsafe_allow_html=True)
+        with c2: st.markdown(kpi("Market share 2025", f"{b25_row['market_share']:.1f}%", "of EU+EFTA+UK", True, b25_row["group"]), unsafe_allow_html=True)
+        with c3: st.markdown(kpi("Rank 2025", f"#{b25_row['rank']}", "in Europe", True), unsafe_allow_html=True)
+        with c4:
+            if b24_row is not None:
+                st.markdown(kpi("Sales 2024", f"{b24_row['sales_2024']/1e3:.0f}K", f"rank #{b24_row['rank']}", True), unsafe_allow_html=True)
+
+        st.markdown("<br>", unsafe_allow_html=True)
+
+        col_trend, col_models = st.columns([1, 1])
+
+        with col_trend:
+            st.markdown(f"##### {selected_brand} — sales trend 2024 vs 2025")
+            trend_data = []
+            if b24_row is not None:
+                trend_data.append({"year": 2024, "sales": b24_row["sales_2024"]})
+            if b25_row is not None:
+                trend_data.append({"year": 2025, "sales": b25_row["sales_2025"]})
+
+            if len(trend_data) == 2:
+                fig = go.Figure()
+                fig.add_trace(go.Bar(
+                    x=[str(r["year"]) for r in trend_data],
+                    y=[r["sales"] for r in trend_data],
+                    marker_color=[BLUE if i==0 else (TEAL if trend_data[1]["sales"] > trend_data[0]["sales"] else CORAL)
+                                  for i in range(len(trend_data))],
+                    text=[f"{r['sales']/1e3:.0f}K" for r in trend_data],
+                    textposition="outside",
+                ))
+                pct = (trend_data[1]["sales"] - trend_data[0]["sales"]) / trend_data[0]["sales"] * 100
+                fig.add_annotation(
+                    x=0.5, y=max(r["sales"] for r in trend_data) * 1.15,
+                    xref="paper",
+                    text=f"Change: {pct:+.1f}%",
+                    showarrow=False,
+                    font=dict(size=14, color=TEAL if pct>0 else CORAL)
+                )
+                fig.update_layout(height=280,
+                    margin=dict(l=0,r=0,t=40,b=10),
+                    yaxis=dict(tickformat=".2s", gridcolor=LGRAY),
+                    paper_bgcolor="rgba(0,0,0,0)", plot_bgcolor="rgba(0,0,0,0)",
+                    showlegend=False, font=dict(size=12))
+                st.plotly_chart(fig, use_container_width=True)
+
+        with col_models:
+            st.markdown(f"##### Top models from {selected_brand} — 2024")
+            brand_models = D["mod"][D["mod"]["brand"] == selected_brand]
+            if len(brand_models):
+                st.dataframe(
+                    brand_models[["rank","model","fuel_type","notes"]].rename(
+                        columns={"rank":"#","model":"Model","fuel_type":"Fuel","notes":"Notes"}
+                    ),
+                    hide_index=True, use_container_width=True
+                )
+            else:
+                st.info(f"No top-10 models for {selected_brand} in 2024 data.")
+
+        st.markdown("<br>", unsafe_allow_html=True)
+        st.markdown(f"##### Group context — {b25_row['group']}")
+        grp = D["grp25"][D["grp25"]["group"] == b25_row["group"]]
+        if len(grp):
+            g = grp.iloc[0]
+            gc1, gc2, gc3 = st.columns(3)
+            with gc1: st.metric("Group total 2025", f"{g['sales_2025']/1e6:.2f}M", f"{g['pct_change']:+.1f}%")
+            with gc2: st.metric("Group market share", f"{g['market_share']:.1f}%")
+            with gc3: st.metric(f"{selected_brand} share of group", f"{b25_row['sales_2025']/g['sales_2025']*100:.1f}%")
+
+# ── TAB 5: COUNTRY COMPARISON ─────────────────────────────────────────────────
+with tabs[4]:
+    st.markdown('<div class="section-hd">Country Comparison</div>', unsafe_allow_html=True)
+
+    all_c = sorted(D["c25"]["country"].tolist())
+    col_sel1, col_sel2 = st.columns(2)
+    with col_sel1:
+        ca = st.selectbox("Country A", all_c,
+            index=all_c.index(st.session_state.compare_a) if st.session_state.compare_a in all_c else 0)
+        st.session_state.compare_a = ca
+    with col_sel2:
+        cb_default = st.session_state.compare_b if st.session_state.compare_b in all_c else all_c[1]
+        cb = st.selectbox("Country B", all_c,
+            index=all_c.index(cb_default))
+        st.session_state.compare_b = cb
+
+    def get_country_row(country):
+        r25 = D["c25"][D["c25"]["country"]==country]
+        r24 = D["c24"][D["c24"]["country"]==country]
+        co2r = D["co2"][D["co2"]["country"]==country]
+        prodr = D["prod"][D["prod"]["country"]==country] if len(D["prod"][D["prod"]["country"]==country]) else None
+        return {
+            "country": country,
+            "sales_2025": int(r25["sales_2025"].values[0]) if len(r25) else 0,
+            "sales_2024": int(r25["sales_2024"].values[0]) if len(r25) else 0,
+            "pct_change": float(r25["pct_change"].values[0]) if len(r25) else 0,
+            "region": r25["region"].values[0] if len(r25) else "—",
+            "co2": float(co2r["co2_gkm_2024"].values[0]) if len(co2r) else None,
+            "bev": float(co2r["bev_share_pct_2024"].values[0]) if len(co2r) else None,
+            "produced": int(prodr["cars_produced"].values[0]) if prodr is not None and len(prodr) else 0,
+        }
+
+    ra = get_country_row(ca)
+    rb = get_country_row(cb)
+
+    metrics = [
+        ("Sales 2025", "sales_2025", ":,.0f", "units"),
+        ("Sales 2024", "sales_2024", ":,.0f", "units"),
+        ("YoY change", "pct_change", ":+.1f", "%"),
+        ("CO₂ g/km", "co2", ":.1f", "g/km"),
+        ("BEV share", "bev", ":.1f", "%"),
+        ("Cars produced", "produced", ":,.0f", "units"),
+    ]
+
+    col_a, col_vs, col_b = st.columns([2, 0.5, 2])
+
+    with col_a:
+        st.markdown(f"### {ca}")
+        for label, key, fmt, unit in metrics:
+            va = ra.get(key)
+            if va is not None:
+                st.metric(label, f"{va:{fmt[1:]}}" + (" " + unit if unit != "units" else ""))
+
+    with col_vs:
+        st.markdown("<br><br>", unsafe_allow_html=True)
+        st.markdown("### vs")
 
     with col_b:
-        st.markdown("##### Top 10 brands — 2025 vs 2024")
-        merged = D["b25"].merge(D["b24"][["brand","sales_2024"]], on="brand", how="left")
-        merged = merged.sort_values("sales_2025")
-        fig = go.Figure()
-        fig.add_trace(go.Bar(y=merged["brand"], x=merged["sales_2024"], name="2024",
-            orientation="h", marker_color="#C9DCEF", width=0.4))
-        fig.add_trace(go.Bar(y=merged["brand"], x=merged["sales_2025"], name="2025",
-            orientation="h", marker_color=BLUE, width=0.4))
-        for _, row in merged.iterrows():
-            d = row["pct_change"]
-            fig.add_annotation(y=row["brand"], x=row["sales_2025"]*1.02,
-                text=f"{d:+.1f}%", showarrow=False,
-                font=dict(size=9, color=TEAL if d>=0 else CORAL), xanchor="left")
-        fig.update_layout(barmode="overlay", height=380,
-            margin=dict(l=0,r=70,t=10,b=30),
-            legend=dict(orientation="h",y=-0.1),
-            xaxis=dict(tickformat=".2s",gridcolor=LGRAY),
-            paper_bgcolor="rgba(0,0,0,0)", plot_bgcolor="rgba(0,0,0,0)", font=dict(size=11))
-        st.plotly_chart(fig, use_container_width=True)
-        insight("VW leads with 1.45M units (+5.9%). Skoda's +9.6% is the standout — value positioning in a cost-conscious market is working. Audi's flat performance (+0.3%) signals premium fatigue.")
+        st.markdown(f"### {cb}")
+        for label, key, fmt, unit in metrics:
+            vb = rb.get(key)
+            va = ra.get(key)
+            if vb is not None and va is not None:
+                delta = vb - va
+                st.metric(label,
+                    f"{vb:{fmt[1:]}}" + (" " + unit if unit != "units" else ""),
+                    f"{delta:+,.0f}" if unit == "units" else f"{delta:+.1f}")
 
-    with col_m:
-        st.markdown("##### Top 10 models — Europe 2024")
-        fig = go.Figure(go.Bar(
-            x=D["mod"]["model"], y=[10-i for i in range(len(D["mod"]))],
-            marker_color=COLORS[:10],
-            text=D["mod"]["brand"], textposition="inside",
-            textfont=dict(color="white", size=10),
-            customdata=D["mod"]["fuel_type"].values,
-            hovertemplate="<b>%{x}</b><br>Brand: %{text}<br>Fuel: %{customdata}<extra></extra>",
+    st.markdown("<br>", unsafe_allow_html=True)
+
+    # Radar / bar comparison
+    compare_metrics = ["sales_2025","sales_2024","pct_change","co2","bev","produced"]
+    compare_labels = ["Sales 2025","Sales 2024","YoY %","CO₂ g/km","BEV %","Produced"]
+
+    fig = go.Figure()
+    for country_row, color, name in [(ra, BLUE, ca), (rb, CORAL, cb)]:
+        vals = []
+        for m in ["sales_2025","pct_change","bev","produced"]:
+            v = country_row.get(m)
+            vals.append(v if v is not None else 0)
+        fig.add_trace(go.Bar(
+            name=name,
+            x=["Sales 2025","YoY %","BEV %","Produced"],
+            y=vals,
+            marker_color=color,
         ))
-        fig.update_layout(height=280, margin=dict(l=0,r=0,t=10,b=60),
-            xaxis=dict(tickangle=-35, tickfont=dict(size=10)),
-            yaxis=dict(showticklabels=False, showgrid=False),
-            paper_bgcolor="rgba(0,0,0,0)", plot_bgcolor="rgba(0,0,0,0)",
-            showlegend=False, font=dict(size=11))
-        st.plotly_chart(fig, use_container_width=True)
-        tbl = D["mod"][["rank","model","brand","fuel_type"]].copy()
-        tbl.columns = ["#","Model","Brand","Fuel"]
-        st.dataframe(tbl, hide_index=True, use_container_width=True, height=160)
-        insight("Dacia Sandero at #1 is historically significant — the first time a budget brand topped the European model ranking. 8 of the top 10 are petrol/hybrid. Pure BEV (Tesla Model Y) slipped to #4.")
 
-    st.divider()
-    st.markdown("##### Group market share — 2024 vs 2025")
-    cg1, cg2 = st.columns(2)
-    for col, year, data in [(cg1,"2024",D["grp24"]), (cg2,"2025",D["grp25"])]:
-        with col:
-            top8 = data.nlargest(8,"market_share")
-            fig = px.pie(top8, values="market_share", names="group",
-                color_discrete_sequence=COLORS, hole=0.5, title=f"Group share — {year}")
-            fig.update_traces(textinfo="label+percent", textfont_size=10)
-            fig.update_layout(height=280, margin=dict(l=0,r=0,t=40,b=0),
-                showlegend=False, paper_bgcolor="rgba(0,0,0,0)", title_font_size=13)
-            st.plotly_chart(fig, use_container_width=True)
+    fig.update_layout(barmode="group", height=300,
+        margin=dict(l=0,r=0,t=20,b=20),
+        yaxis=dict(gridcolor=LGRAY),
+        legend=dict(orientation="h"),
+        paper_bgcolor="rgba(0,0,0,0)", plot_bgcolor="rgba(0,0,0,0)",
+        font=dict(size=11))
+    st.plotly_chart(fig, use_container_width=True)
+    st.markdown('<div class="data-note">Note: raw values are on different scales — use as directional comparison only</div>', unsafe_allow_html=True)
 
-# ── TECHNOLOGY TRANSITION ─────────────────────────────────────────────────────
-elif section == "4. Technology Transition":
-    st.markdown('<div class="section-hd">4. Technology Transition — Electrification & Emissions</div>', unsafe_allow_html=True)
+# ── TAB 6: TECHNOLOGY ─────────────────────────────────────────────────────────
+with tabs[5]:
+    st.markdown('<div class="section-hd">Technology Transition</div>', unsafe_allow_html=True)
 
     k1, k2, k3, k4 = st.columns(4)
-    with k1:
-        st.markdown(kpi("BEV share 2024","13.6%","vs 14.6% in 2023",False,"First-ever decline"), unsafe_allow_html=True)
-    with k2:
-        st.markdown(kpi("SUV dominance","53%","of all EU sales",True,"Up from 19% in 2015"), unsafe_allow_html=True)
-    with k3:
-        st.markdown(kpi("EU CO₂ avg 2024","107.8 g/km","vs target 93.6 g/km",False,"14 g/km gap to close"), unsafe_allow_html=True)
-    with k4:
-        st.markdown(kpi("BEV Q1 2026","20.6%","record EU share",True,"vs 15.2% in Q1 2025"), unsafe_allow_html=True)
+    with k1: st.markdown(kpi("BEV share 2024","13.6%","vs 14.6% in 2023",False,"First-ever decline"), unsafe_allow_html=True)
+    with k2: st.markdown(kpi("SUV share 2024","53%","of all EU sales",True,"Up from 19% in 2015"), unsafe_allow_html=True)
+    with k3: st.markdown(kpi("EU CO₂ 2024","107.8 g/km","vs target 93.6",False,"14 g/km gap"), unsafe_allow_html=True)
+    with k4: st.markdown(kpi("BEV Q1 2026","20.6%","record EU share",True,"vs 15.2% Q1 2025"), unsafe_allow_html=True)
 
     st.markdown("<br>", unsafe_allow_html=True)
     col_f, col_s = st.columns([1.3, 1])
 
     with col_f:
-        st.markdown("##### Powertrain shift — EU market share 2021→2024")
-        fuel_long = D["fuel"].melt(id_vars="year",
+        st.markdown("##### Powertrain mix evolution — EU 2021→2024")
+        years_sel = st.multiselect("Years", [2021,2022,2023,2024], default=[2021,2022,2023,2024])
+        fuels_sel = st.multiselect("Fuel types",
+            ["Petrol","Diesel","Battery EV","Plug-in Hybrid","Hybrid"],
+            default=["Petrol","Diesel","Battery EV","Plug-in Hybrid","Hybrid"])
+
+        fuel_long = D["fuel"][D["fuel"]["year"].isin(years_sel)].melt(
+            id_vars="year",
             value_vars=["petrol_pct","diesel_pct","bev_pct","phev_pct","hybrid_pct"],
-            var_name="fuel", value_name="pct")
-        fuel_long["fuel"] = fuel_long["fuel"].map({"petrol_pct":"Petrol","diesel_pct":"Diesel",
-            "bev_pct":"Battery EV","phev_pct":"Plug-in Hybrid","hybrid_pct":"Hybrid"})
+            var_name="fuel", value_name="pct"
+        )
+        fuel_long["fuel"] = fuel_long["fuel"].map({
+            "petrol_pct":"Petrol","diesel_pct":"Diesel","bev_pct":"Battery EV",
+            "phev_pct":"Plug-in Hybrid","hybrid_pct":"Hybrid"})
+        fuel_long = fuel_long[fuel_long["fuel"].isin(fuels_sel)]
+
         fig = px.bar(fuel_long, x="year", y="pct", color="fuel",
-            color_discrete_map={"Petrol":AMBER,"Diesel":GRAY,"Battery EV":BLUE,"Plug-in Hybrid":TEAL,"Hybrid":"#534AB7"},
+            color_discrete_map={"Petrol":AMBER,"Diesel":GRAY,"Battery EV":BLUE,
+                                "Plug-in Hybrid":TEAL,"Hybrid":"#534AB7"},
             labels={"pct":"Market share (%)","year":"","fuel":""}, text="pct")
         fig.update_traces(texttemplate="%{text:.1f}%", textposition="inside", textfont_size=9)
-        fig.update_layout(barmode="stack", height=340,
+        fig.update_layout(barmode="stack", height=320,
             margin=dict(l=0,r=0,t=10,b=40),
             legend=dict(orientation="h",y=-0.15),
             yaxis=dict(ticksuffix="%",gridcolor=LGRAY,range=[0,105]),
             paper_bgcolor="rgba(0,0,0,0)", plot_bgcolor="rgba(0,0,0,0)", font=dict(size=11))
         st.plotly_chart(fig, use_container_width=True)
-        st.markdown('<div class="data-note">Source: ACEA Pocket Guide 2025/2026</div>', unsafe_allow_html=True)
 
     with col_s:
-        st.markdown("##### Body segment — EU 2024")
+        st.markdown("##### Body segment share — 2024")
         fig = px.pie(D["seg"], values="share_pct", names="segment",
             color_discrete_sequence=COLORS, hole=0.55)
         fig.update_traces(textinfo="label+percent", textfont_size=11)
-        fig.update_layout(height=200, margin=dict(l=0,r=0,t=0,b=0),
+        fig.update_layout(height=220, margin=dict(l=0,r=0,t=0,b=0),
             showlegend=False, paper_bgcolor="rgba(0,0,0,0)")
         st.plotly_chart(fig, use_container_width=True)
-        risk("BEV's first-ever decline in 2024 creates a regulatory crisis: EU's 2025 target is 93.6 g/km but the fleet average was 107.8 g/km. OEMs face fines unless they push BEV volumes aggressively.")
-        insight("Q1 2026 BEV share rebounded to 20.6% — a record. The market correction was temporary. Electrification is back on track.")
+
+        risk("BEV share fell in 2024 for the first time ever — EU 2025 targets create compliance pressure on all OEMs.")
+        insight("Q1 2026 BEV share hit 20.6% — a record. Recovery confirmed.")
 
     st.divider()
-    st.markdown("##### Average CO₂ by country — 2024")
-    co2 = D["co2"][D["co2"]["country"] != "EU average"].sort_values("co2_gkm_2024")
+    st.markdown("##### CO₂ emissions by country vs EU target — 2024")
+    co2_chart = D["co2"][D["co2"]["country"] != "EU average"].sort_values("co2_gkm_2024")
     fig = go.Figure(go.Bar(
-        x=co2["co2_gkm_2024"], y=co2["country"], orientation="h",
-        marker_color=[TEAL if v < 93.6 else (AMBER if v < 107.8 else CORAL) for v in co2["co2_gkm_2024"]],
-        text=[f"{v:.0f}" for v in co2["co2_gkm_2024"]],
+        x=co2_chart["co2_gkm_2024"], y=co2_chart["country"], orientation="h",
+        marker_color=[TEAL if v<93.6 else (AMBER if v<107.8 else CORAL) for v in co2_chart["co2_gkm_2024"]],
+        text=[f"{v:.0f}" for v in co2_chart["co2_gkm_2024"]],
         textposition="outside", textfont=dict(size=10),
     ))
     fig.add_vline(x=93.6, line_dash="dash", line_color=BLUE,
-        annotation_text="2025 target 93.6", annotation_font=dict(size=9, color=BLUE))
+        annotation_text="2025 target 93.6", annotation_font=dict(size=9,color=BLUE))
     fig.add_vline(x=107.8, line_dash="dot", line_color=GRAY,
-        annotation_text="EU avg 107.8", annotation_font=dict(size=9, color=GRAY))
-    fig.update_layout(height=300, margin=dict(l=0,r=70,t=30,b=10),
-        xaxis=dict(title="g CO₂/km", gridcolor=LGRAY),
-        yaxis=dict(tickfont=dict(size=10)),
+        annotation_text="EU avg 107.8", annotation_font=dict(size=9,color=GRAY))
+    fig.update_layout(height=300, margin=dict(l=0,r=80,t=30,b=10),
+        xaxis=dict(title="g CO₂/km",gridcolor=LGRAY),
         paper_bgcolor="rgba(0,0,0,0)", plot_bgcolor="rgba(0,0,0,0)", font=dict(size=11))
     st.plotly_chart(fig, use_container_width=True)
-    st.markdown('<div class="data-note">Green = below 2025 target · Orange = above EU avg · Red = highest emitters — Source: ACEA/ICCT 2024</div>', unsafe_allow_html=True)
 
-# ── COMPETITIVE POSITIONING ───────────────────────────────────────────────────
-elif section == "5. Competitive Positioning":
-    st.markdown('<div class="section-hd">5. Competitive Positioning — Production & Supply</div>', unsafe_allow_html=True)
+# ── TAB 7: PRODUCTION ─────────────────────────────────────────────────────────
+with tabs[6]:
+    st.markdown('<div class="section-hd">Production Intelligence</div>', unsafe_allow_html=True)
 
-    prod = D["prod"][D["prod"]["cars_produced"] > 0].merge(
-        D["c24"][["country","sales_2024"]], on="country", how="left"
-    ).dropna(subset=["sales_2024"]).sort_values("cars_produced", ascending=False).head(12)
+    prod = D["prod"].merge(D["c24"][["country","sales_2024"]], on="country", how="left").dropna(subset=["sales_2024"])
     prod["balance"] = prod["cars_produced"] - prod["sales_2024"]
-    prod["net"] = prod["balance"].apply(lambda x: "Net exporter" if x > 0 else "Net importer")
+    prod["net"] = prod["balance"].apply(lambda x: "Net exporter" if x>0 else "Net importer")
+    prod = prod.sort_values("cars_produced", ascending=False)
 
-    col_chart, col_ins = st.columns([1.5, 1])
+    col_p, col_t = st.columns([1.5, 1])
 
-    with col_chart:
-        st.markdown("##### Production vs domestic sales — 2024 (top 12 producing nations)")
+    with col_p:
+        st.markdown("##### Production vs domestic sales — 2024")
+        n_prod = st.slider("Show top N producers", 5, len(prod), min(12, len(prod)))
+        prod_top = prod.head(n_prod)
+
         fig = go.Figure()
-        fig.add_trace(go.Bar(name="Cars produced", x=prod["country"],
-            y=prod["cars_produced"], marker_color=BLUE))
-        fig.add_trace(go.Bar(name="New registrations", x=prod["country"],
-            y=prod["sales_2024"], marker_color="#B5D4F4"))
-        fig.update_layout(barmode="group", height=360,
+        fig.add_trace(go.Bar(name="Produced", x=prod_top["country"],
+            y=prod_top["cars_produced"], marker_color=BLUE))
+        fig.add_trace(go.Bar(name="Registered", x=prod_top["country"],
+            y=prod_top["sales_2024"], marker_color="#B5D4F4"))
+        fig.update_layout(barmode="group", height=350,
             margin=dict(l=0,r=0,t=10,b=60),
             legend=dict(orientation="h",y=-0.15),
             yaxis=dict(tickformat=".2s",gridcolor=LGRAY),
             xaxis=dict(tickangle=-35,tickfont=dict(size=10)),
             paper_bgcolor="rgba(0,0,0,0)", plot_bgcolor="rgba(0,0,0,0)", font=dict(size=11))
         st.plotly_chart(fig, use_container_width=True)
-        st.markdown('<div class="data-note">Source: S&P Global Mobility / ACEA 2024</div>', unsafe_allow_html=True)
 
-    with col_ins:
-        st.markdown("#### Supply chain reading")
-        insight("Germany produces 3.9M cars but only registers 2.8M — a net exporter of 1.1M units. Portugal produces 229K (AutoEuropa) but registers 210K — nearly balanced.")
-        warning("Czechia, Slovakia, and Hungary are major producers with small domestic markets. Structurally dependent on export demand. Any EU tariff escalation hits these markets hardest.")
-        tbl = prod[["country","balance","net"]].copy()
-        tbl.columns = ["Country","Balance","Position"]
+    with col_t:
+        st.markdown("##### Net trade position")
+        tbl = prod[["country","cars_produced","sales_2024","balance","net"]].copy()
+        tbl.columns = ["Country","Produced","Registered","Balance","Position"]
+        tbl["Produced"] = tbl["Produced"].apply(lambda x: f"{x:,.0f}")
+        tbl["Registered"] = tbl["Registered"].apply(lambda x: f"{x:,.0f}")
         tbl["Balance"] = tbl["Balance"].apply(lambda x: f"{x:+,.0f}")
-        st.markdown("**Net trade position**")
-        st.dataframe(tbl, hide_index=True, use_container_width=True, height=280)
+        st.dataframe(tbl, hide_index=True, use_container_width=True, height=380)
 
-# ── BUYER INTELLIGENCE ────────────────────────────────────────────────────────
-elif section == "6. Buyer Intelligence":
-    st.markdown('<div class="section-hd">6. Buyer Intelligence</div>', unsafe_allow_html=True)
+# ── TAB 8: DEMOGRAPHICS ───────────────────────────────────────────────────────
+with tabs[7]:
+    st.markdown('<div class="section-hd">Buyer Intelligence</div>', unsafe_allow_html=True)
 
     st.markdown("""
 <div class="spg-box">
-<div class="spg-title">📊 Buyer Demographics — S&P Global Mobility · Polk Automotive Solutions</div>
+<div class="spg-title">📊 Full Buyer Demographics — S&P Global Mobility · Polk Automotive Solutions</div>
 <div class="spg-body">
-Full buyer demographic data (gender, age group, household income, purchase motivation) by country, brand and model is available exclusively through <strong>S&P Global Mobility's Polk registration database</strong>.<br><br>
+Real buyer demographic data (gender, age, household income, purchase motivation, loyalty/conquest metrics) by country, brand and model is available exclusively through <strong>S&P Global Mobility's Polk registration database</strong>.<br><br>
 <strong>European coverage:</strong> Italy · Spain · United Kingdom · France<br>
 <strong>Product:</strong> Polk Audiences / Polk Data Services<br>
 <strong>Access:</strong> Enterprise licence — <a href="https://www.spglobal.com/mobility/en/index.html" target="_blank">spglobal.com/mobility</a><br><br>
-The charts below use <strong>illustrative estimates</strong> based on published industry research. Not for commercial decisions without a Polk licence.
+The interactive charts below use <strong>illustrative estimates</strong> based on published industry research.
 </div>
 </div>
 """, unsafe_allow_html=True)
 
     st.markdown("<br>", unsafe_allow_html=True)
-    st.markdown("##### Illustrative buyer profile — Europe (estimates only)")
+
+    demo_segment = st.selectbox("Filter by segment",
+        ["All segments","SUV","Small","Medium","Luxury","MPV"])
 
     d1, d2, d3 = st.columns(3)
 
+    gender_data = {
+        "All segments": {"Male":60,"Female":40},
+        "SUV":{"Male":56,"Female":44},
+        "Small":{"Male":41,"Female":59},
+        "Medium":{"Male":53,"Female":47},
+        "Luxury":{"Male":71,"Female":29},
+        "MPV":{"Male":44,"Female":56},
+    }
+    gd = gender_data.get(demo_segment, gender_data["All segments"])
+
     with d1:
-        st.markdown("**Gender split by segment**")
-        gd = pd.DataFrame({"Segment":["SUV","Small","Medium","Luxury","MPV"],
-            "Male":[56,41,53,71,44],"Female":[44,59,47,29,56]})
-        fig = go.Figure()
-        fig.add_trace(go.Bar(name="Male", x=gd["Segment"], y=gd["Male"], marker_color=BLUE))
-        fig.add_trace(go.Bar(name="Female", x=gd["Segment"], y=gd["Female"], marker_color=CORAL))
-        fig.update_layout(barmode="stack", height=240,
-            margin=dict(l=0,r=0,t=10,b=0),
-            legend=dict(orientation="h",y=-0.15,font=dict(size=10)),
-            yaxis=dict(ticksuffix="%",gridcolor=LGRAY,range=[0,105]),
-            paper_bgcolor="rgba(0,0,0,0)", plot_bgcolor="rgba(0,0,0,0)", font=dict(size=11))
+        st.markdown(f"**Gender split — {demo_segment}**")
+        fig = go.Figure(go.Pie(
+            labels=list(gd.keys()), values=list(gd.values()),
+            hole=0.55, marker_colors=[BLUE,CORAL],
+            textinfo="label+percent", textfont_size=13))
+        fig.update_layout(height=220, margin=dict(l=0,r=0,t=10,b=0),
+            showlegend=False, paper_bgcolor="rgba(0,0,0,0)")
         st.plotly_chart(fig, use_container_width=True)
 
     with d2:
-        st.markdown("**Age distribution of new car buyers**")
-        fig = go.Figure(go.Pie(
-            labels=["18-35","36-50","51-65","65+"], values=[14,34,33,19],
-            hole=0.55, marker_colors=[BLUE,TEAL,AMBER,GRAY],
-            textinfo="label+percent", textfont_size=11))
-        fig.add_annotation(text="Illustrative", x=0.5, y=0.5, showarrow=False,
-            font=dict(size=9, color=GRAY), align="center")
-        fig.update_layout(height=240, margin=dict(l=0,r=0,t=10,b=0),
-            showlegend=False, paper_bgcolor="rgba(0,0,0,0)")
+        st.markdown("**Age distribution**")
+        age_data = {"18-35":14,"36-50":34,"51-65":33,"65+":19}
+        if demo_segment == "Small": age_data = {"18-35":28,"36-50":32,"51-65":25,"65+":15}
+        if demo_segment == "Luxury": age_data = {"18-35":8,"36-50":30,"51-65":38,"65+":24}
+        if demo_segment == "SUV": age_data = {"18-35":12,"36-50":38,"51-65":32,"65+":18}
+        fig = px.bar(x=list(age_data.keys()), y=list(age_data.values()),
+            color_discrete_sequence=[BLUE],
+            labels={"x":"Age group","y":"%"})
+        fig.update_layout(height=220, margin=dict(l=0,r=0,t=10,b=0),
+            yaxis=dict(ticksuffix="%",gridcolor=LGRAY),
+            paper_bgcolor="rgba(0,0,0,0)", plot_bgcolor="rgba(0,0,0,0)", font=dict(size=11))
         st.plotly_chart(fig, use_container_width=True)
 
     with d3:
@@ -493,16 +711,41 @@ The charts below use <strong>illustrative estimates</strong> based on published 
         motiv = pd.DataFrame({
             "Motivation":["Reliability","Running costs","Brand","Safety","Design","Green/EV"],
             "Score":[78,65,52,48,41,33]}).sort_values("Score")
-        fig = go.Figure(go.Bar(x=motiv["Score"], y=motiv["Motivation"],
-            orientation="h", marker_color=BLUE,
+        fig = go.Figure(go.Bar(
+            x=motiv["Score"], y=motiv["Motivation"], orientation="h",
+            marker_color=BLUE,
             text=motiv["Score"].apply(lambda x: f"{x}%"),
             textposition="outside", textfont=dict(size=10)))
-        fig.update_layout(height=240, margin=dict(l=0,r=40,t=10,b=10),
+        fig.update_layout(height=220, margin=dict(l=0,r=40,t=10,b=10),
             xaxis=dict(range=[0,100],gridcolor=LGRAY),
             paper_bgcolor="rgba(0,0,0,0)", plot_bgcolor="rgba(0,0,0,0)", font=dict(size=11))
         st.plotly_chart(fig, use_container_width=True)
 
-    st.caption("⚠️ All figures above are illustrative estimates. For commercial use, activate S&P Global Mobility Polk licence.")
+    st.caption("⚠️ Illustrative estimates only. Real data requires S&P Global Mobility Polk licence.")
+
+# ── TAB 9: EXECUTIVE SUMMARY ──────────────────────────────────────────────────
+with tabs[8]:
+    st.markdown('<div class="section-hd">Executive Summary</div>', unsafe_allow_html=True)
+
+    c1, c2 = st.columns(2)
+    with c1:
+        st.markdown("#### Key findings")
+        insight("The European market has recovered to 13.3M units in 2025 — its strongest since 2019. Growth is uneven: Spain and Poland are accelerating while France and Italy contract.")
+        insight("Dacia Sandero became Europe's #1 model for the first time ever in 2024, dethroning VW Golf. The value segment is winning — pressure on margin strategies.")
+        warning("BEV share fell for the first time in history in 2024. The 2025 EU CO₂ targets (93.6 g/km) create compliance risk for OEMs still dependent on ICE volume.")
+
+    with c2:
+        st.markdown("#### Competitive landscape")
+        insight("VW Group consolidated leadership to 26.9% market share in 2025. Skoda entered the top-2 brands for the first time ever in Q1 2026.")
+        risk("Tesla's sales collapsed -26.6% in 2025 — sharpest fall of any major brand. Traditional OEMs are recovering EV ground.")
+        risk("Chinese brands (BYD, SAIC/MG) grew +270% and +5.1% in 2025. Southern European markets — particularly Portugal and Spain — are highest-exposure entry points.")
+
+    st.divider()
+    st.markdown("#### Recommended actions")
+    r1, r2, r3 = st.columns(3)
+    with r1: st.info("**Iberian growth**\nSpain and Portugal outpacing EU average. Review network capacity and model mix for these markets.")
+    with r2: st.warning("**EV transition**\nBEV stall vs regulatory targets. Assess OEM partners' compliance trajectories urgently.")
+    with r3: st.error("**Chinese brands**\nSet up systematic tracking of BYD and MG penetration. Early warning system needed.")
 
 st.divider()
-st.caption("European Car Market Intelligence Report · Prepared by Maria João Luz · mariajoaoluz.com · Data: ACEA, JATO Dynamics, S&P Global Mobility, ICCT, EEA · 2024–2025")
+st.caption("European Car Market Intelligence Report · Maria João Luz · mariajoaoluz.com · Data: ACEA, JATO Dynamics, S&P Global Mobility, ICCT, EEA · 2024–2025")
