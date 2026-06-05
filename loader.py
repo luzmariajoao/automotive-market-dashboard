@@ -3,8 +3,11 @@
 from pathlib import Path
 import pandas as pd
 
-RAW = Path(__file__).resolve().parent.parent / "data" / "raw"
-PROCESSED = Path(__file__).resolve().parent.parent / "data" / "processed"
+# Funciona local (loader.py em src/) e no Streamlit Cloud (loader.py na raiz)
+_HERE = Path(__file__).resolve().parent
+_ROOT = _HERE.parent if (_HERE.parent / "data").exists() else _HERE
+RAW = _ROOT / "data" / "raw"
+PROCESSED = _ROOT / "data" / "processed"
 
 AVAILABLE_YEARS = [2024, 2025]
 

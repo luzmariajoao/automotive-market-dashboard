@@ -5,7 +5,11 @@ Prepared for executive review | Source: ACEA, JATO Dynamics, S&P Global Mobility
 
 import sys
 from pathlib import Path
-sys.path.insert(0, str(Path(__file__).parent))
+_src = Path(__file__).resolve().parent
+if (_src / "loader.py").exists():
+    sys.path.insert(0, str(_src))
+elif (_src / "src" / "loader.py").exists():
+    sys.path.insert(0, str(_src / "src"))
 
 import streamlit as st
 import plotly.express as px
