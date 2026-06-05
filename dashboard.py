@@ -298,7 +298,7 @@ else:
 
 top_country = df.nlargest(1, sales_col).iloc[0]
 top_brand = D["b25"].iloc[0] if year == 2025 else D["b24"].iloc[0]
-bev = D["fuel"][D["fuel"]["year"] == year]["bev_pct"].values[0] if year in D["fuel"]["year"].values else 13.6
+bev = D["fuel"][D["fuel"]["year"] == year]["bev_pct"].values[0] if year in D["fuel"]["year"].values else (17.4 if year == 2025 else 13.6)
 
 k1, k2, k3, k4, k5 = st.columns(5)
 with k1: st.markdown(kpi(f"Total sales {year}", f"{total/1e6:.2f}M", f"{delta_total:.1f}% YoY", delta_total>0), unsafe_allow_html=True)

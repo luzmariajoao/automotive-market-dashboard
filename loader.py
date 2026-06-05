@@ -171,11 +171,14 @@ def load_manufacturer_groups(year=2025):
         return pd.DataFrame(data, columns=["group","sales_2024","sales_2023","pct_change","market_share"])
 
 def load_fuel_type_mix():
+    # Source: ACEA full year 2025 — EU only
+    # 2025: BEV 17.4%, Hybrid 34.5%, PHEV 9.4%, Petrol 26.6%, Diesel 8.9%
     data = [
-        (2021,39.9,19.8,9.1,8.9,19.6,2.8,40.6),
-        (2022,36.4,22.7,12.1,9.4,16.4,3.0,47.3),
-        (2023,35.3,25.8,14.6,7.7,13.6,3.0,51.1),
-        (2024,33.3,30.9,13.6,7.1,11.9,3.1,54.8),
+        (2021,39.9,19.8, 9.1, 8.9,19.6,2.8,40.6),
+        (2022,36.4,22.7,12.1, 9.4,16.4,3.0,47.3),
+        (2023,35.3,25.8,14.6, 7.7,13.6,3.0,51.1),
+        (2024,33.3,30.9,13.6, 7.1,11.9,3.1,54.8),
+        (2025,26.6, 8.9,17.4, 9.4,34.5,3.2,64.5),
     ]
     return pd.DataFrame(data, columns=["year","petrol_pct","diesel_pct","bev_pct","phev_pct","hybrid_pct","alternative_pct","total_alternative_pct"])
 
