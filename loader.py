@@ -84,16 +84,16 @@ def load_top_brands(year=2025):
 
 def load_top_models(year=2024):
     data = [
-        (1,"Sandero","Dacia","Renault Group","Petrol/LPG","Top model em Espanha e Portugal"),
-        (2,"Clio","Renault","Renault Group","Petrol/Hybrid","Subiu de 4º em 2023"),
-        (3,"Golf","Volkswagen","Volkswagen Group","Petrol/Diesel","215.700 unidades +17%"),
-        (4,"Model Y","Tesla","Tesla","Elétrico","Nº1 na NL SE CH DK NO"),
-        (5,"T-Roc","Volkswagen","Volkswagen Group","Petrol/Diesel","Desceu uma posição"),
-        (6,"208","Peugeot","Stellantis","Petrol/Elétrico","Nº1 em 2022"),
-        (7,"Yaris Cross","Toyota","Toyota Group","Híbrido","Subiu uma posição"),
-        (8,"Octavia","Skoda","Volkswagen Group","Petrol/Diesel","Subiu duas posições"),
-        (9,"Duster","Dacia","Renault Group","Petrol/LPG/Híbrido","Entrou top 10 de 15º"),
-        (10,"Yaris","Toyota","Toyota Group","Híbrido","Entrou top 10 de 14º"),
+        (1,"Sandero","Dacia","Renault Group","Petrol/LPG","Top model in Spain and Portugal"),
+        (2,"Clio","Renault","Renault Group","Petrol/Hybrid","Up from 4th in 2023"),
+        (3,"Golf","Volkswagen","Volkswagen Group","Petrol/Diesel","215,700 units +17%"),
+        (4,"Model Y","Tesla","Tesla","Electric","#1 in NL SE CH DK NO"),
+        (5,"T-Roc","Volkswagen","Volkswagen Group","Petrol/Diesel","Slipped one position"),
+        (6,"208","Peugeot","Stellantis","Petrol/Electric","Top model in 2022"),
+        (7,"Yaris Cross","Toyota","Toyota Group","Hybrid","Improved one rank"),
+        (8,"Octavia","Skoda","Volkswagen Group","Petrol/Diesel","Improved two ranks"),
+        (9,"Duster","Dacia","Renault Group","Petrol/LPG/Hybrid","Entered top 10 from 15th"),
+        (10,"Yaris","Toyota","Toyota Group","Hybrid","Entered top 10 from 14th"),
     ]
     return pd.DataFrame(data, columns=["rank","model","brand","group","fuel_type","notes"])
 
@@ -229,4 +229,4 @@ if __name__ == "__main__":
     for c in ["Portugal","Germany","Spain","France","Italy"]:
         row = df[df["country"]==c].iloc[0]
         print(f"{c:15}: {row['reg_per_1000_2025']:.1f}/1000 hab | 1 por cada {row['1_per_n_2025']} hab")
-    print("\nTodos os loaders OK")
+    print("\nAll loaders OK")
