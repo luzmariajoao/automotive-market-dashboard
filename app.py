@@ -1,5 +1,5 @@
 """Entry point para Streamlit Cloud — redirige para src/dashboard.py"""
-import sys
+pythonimport sys
 from pathlib import Path
-sys.path.insert(0, str(Path(__file__).parent / "src"))
-exec(open(Path(__file__).parent / "src" / "dashboard.py").read())
+sys.path.insert(0, str(Path(__file__).parent))
+exec(open(Path(__file__).parent / "dashboard.py").read())
