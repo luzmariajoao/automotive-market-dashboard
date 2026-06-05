@@ -340,7 +340,7 @@ with tabs[0]:
       "YoY Change (%)",
       "CO₂ emissions (g/km)",
       "BEV share (%)",
-      "Cars per 1,000 inhabitants",
+      "New reg. per 1,000 people",
     ])
 
   map_df = D["c25_ext"].copy()
@@ -368,7 +368,7 @@ with tabs[0]:
     title = "BEV market share % (2024)"; fmt = ":.1f"
     scale = [[0,"#f5f5f5"],[0.5,"#85B7EB"],[1,"#042C53"]]
   else:
-    color_col = "cars_per_1000"; title = "New cars per 1,000 inhabitants (2024)"; fmt = ":.0f"
+    color_col = "cars_per_1000"; title = "New car registrations per 1,000 people (2025)"; fmt = ":.0f"
     scale = [[0,"#E6F1FB"],[1,"#042C53"]]
 
   map_plot = map_df.dropna(subset=["iso", color_col])
@@ -433,8 +433,9 @@ with tabs[1]:
       font=dict(size=11))
     st.plotly_chart(fig, use_container_width=True)
 
-    st.markdown("##### Top 10 models — 2024")
-    tbl = D[f"mod{year}"][["rank","model","brand","fuel_type"]].copy()
+    st.markdown(f"##### Top 10 models — {year}")
+    _mod_key = f"mod{year}" if f"mod{year}" in D else "mod24"
+    tbl = D[_mod_key][["rank","model","brand","fuel_type"]].copy()
     tbl.columns = ["#","Model","Brand","Fuel"]
     st.dataframe(tbl, hide_index=True, use_container_width=True, height=280)
 
@@ -578,7 +579,7 @@ with tabs[3]:
 
     with col_models:
       st.markdown(f"##### Top models from {selected_brand} — 2024")
-      brand_models = D["mod"][D[f"mod{year}"]["brand"] == selected_brand]
+      brand_models = _get_models_for_brand(selected_brand)
       if len(brand_models):
         st.dataframe(
           brand_models[["rank","model","fuel_type","notes"]].rename(
