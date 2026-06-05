@@ -152,8 +152,39 @@ def _get_brands(year=2025):
 
 
 
-# ── Models by brand — imported from models_data.py ──────────────────────────
-from models_data import MODELS_BY_BRAND as _MODELS_BY_BRAND
+# ── Models by brand — all data inline, no external file needed ───────────────
+_MODELS_BY_BRAND = {
+    "Volkswagen":   [("Golf","Petrol/Diesel/Electric",215700,"+17%"),("Tiguan","Petrol/Diesel",195000,"+8%"),("T-Roc","Petrol/Diesel",180000,"-2%"),("Polo","Petrol",155000,"+3%"),("Passat","Petrol/PHEV",85000,"-5%")],
+    "Toyota":       [("Yaris Cross","Hybrid",158000,"+12%"),("Yaris","Hybrid",148000,"+9%"),("C-HR","Hybrid",130000,"+22%"),("Corolla","Hybrid",120000,"+5%"),("RAV4","Hybrid/PHEV",105000,"+3%")],
+    "Skoda":        [("Octavia","Petrol/Diesel",148000,"+8%"),("Karoq","Petrol/Diesel",125000,"+6%"),("Fabia","Petrol",118000,"+4%"),("Kodiaq","Petrol/Diesel",105000,"+15%"),("Scala","Petrol",62000,"+2%")],
+    "BMW":          [("3 Series","Petrol/PHEV",145000,"+5%"),("X1","Petrol/Electric",138000,"+12%"),("1 Series","Petrol",120000,"+8%"),("X3","Petrol/PHEV",115000,"+3%"),("5 Series","Petrol/PHEV",85000,"+7%")],
+    "Renault":      [("Clio","Petrol/Hybrid",245000,"+6%"),("Austral","Hybrid",135000,"+18%"),("Captur","Petrol/Hybrid",128000,"+4%"),("Megane E-Tech","Electric",65000,"+30%"),("Arkana","Hybrid",58000,"-5%")],
+    "Mercedes":     [("A-Class","Petrol/Diesel",125000,"-3%"),("C-Class","Petrol/PHEV",118000,"+5%"),("GLC","Petrol/PHEV",105000,"+8%"),("E-Class","Petrol/PHEV",95000,"+12%"),("EQA/EQB","Electric",55000,"-10%")],
+    "Audi":         [("A3","Petrol/Diesel",148000,"-2%"),("Q3","Petrol/Diesel",130000,"+4%"),("A4/A5","Petrol/PHEV",115000,"+8%"),("Q5","Petrol/PHEV/Electric",105000,"+6%"),("Q2","Petrol",62000,"-8%")],
+    "Peugeot":      [("208","Petrol/Electric",215000,"+4%"),("2008","Petrol/Electric",148000,"+2%"),("308","Petrol/PHEV",95000,"-6%"),("3008","PHEV/Electric",88000,"+25%"),("e-208","Electric",68000,"+15%")],
+    "Dacia":        [("Sandero","Petrol/LPG",258000,"-3%"),("Duster","Petrol/LPG/Hybrid",168000,"+22%"),("Jogger","Petrol/LPG",75000,"+8%"),("Spring","Electric",45000,"+35%"),("Bigster","Petrol/Hybrid",28000,"New")],
+    "Hyundai":      [("Tucson","Petrol/Hybrid/PHEV",148000,"+5%"),("i20","Petrol",105000,"-3%"),("Kona","Petrol/Hybrid/Electric",98000,"+15%"),("IONIQ 5","Electric",65000,"-8%"),("i30","Petrol/Hybrid",62000,"-10%")],
+    "Kia":          [("Sportage","Petrol/Hybrid/PHEV",168000,"+3%"),("Ceed","Petrol/Hybrid",95000,"-5%"),("EV6","Electric",72000,"-12%"),("Stonic","Petrol",62000,"-8%"),("Niro","Hybrid/PHEV/Electric",58000,"+5%")],
+    "Opel/Vauxhall":[("Corsa","Petrol/Electric",148000,"-5%"),("Astra","Petrol/PHEV",95000,"-8%"),("Mokka","Petrol/Electric",88000,"-3%"),("Grandland","Petrol/PHEV/Electric",52000,"+5%"),("Crossland","Petrol",55000,"-15%")],
+    "Volvo":        [("XC40","Petrol/Electric",115000,"+8%"),("XC60","Petrol/PHEV",95000,"+5%"),("EX30","Electric",58000,"New"),("XC90","Petrol/PHEV",45000,"+3%"),("S60/V60","Petrol/PHEV",38000,"-5%")],
+    "Ford":         [("Puma","Petrol/Mild Hybrid",195000,"-3%"),("Kuga","Petrol/PHEV",118000,"-8%"),("Focus","Petrol/Diesel",88000,"-12%"),("Explorer","Electric",45000,"New"),("Mustang Mach-E","Electric",38000,"-20%")],
+    "Citroen":      [("C3","Petrol/Electric",145000,"+5%"),("C5 Aircross","Petrol/PHEV",85000,"-5%"),("Berlingo","Petrol",75000,"+2%"),("C4","Petrol/Electric",62000,"-8%"),("e-C3","Electric",48000,"New")],
+    "Cupra":        [("Formentor","Petrol/PHEV",128000,"+25%"),("Born","Electric",48000,"+35%"),("Ateca","Petrol",62000,"-5%"),("Terramar","Petrol/PHEV",38000,"New"),("Leon","Petrol/PHEV",22000,"-10%")],
+    "Fiat":         [("Panda","Petrol",145000,"-8%"),("500","Petrol/Electric",98000,"-12%"),("600e","Electric",25000,"New"),("Tipo","Petrol/Diesel",52000,"-15%"),("500X","Petrol",38000,"-18%")],
+    "Tesla":        [("Model Y","Electric",151550,"-28%"),("Model 3","Electric",58000,"-15%"),("Model S","Electric",8500,"-10%"),("Model X","Electric",6500,"-8%"),("Cybertruck","Electric",1200,"New")],
+    "Nissan":       [("Juke","Petrol/Hybrid",125000,"-5%"),("Qashqai","Petrol/Mild Hybrid",118000,"-8%"),("X-Trail","Petrol/Hybrid",45000,"-10%"),("Leaf","Electric",35000,"-25%"),("Ariya","Electric",18000,"-30%")],
+    "Seat":         [("Ibiza","Petrol",95000,"-12%"),("Arona","Petrol",78000,"-15%"),("Leon","Petrol/PHEV",72000,"-18%"),("Ateca","Petrol",45000,"-20%"),("Tarraco","Petrol/PHEV",28000,"-12%")],
+    "MG":           [("MG ZS","Petrol/Electric",85000,"-10%"),("MG4","Electric",65000,"-15%"),("MG HS","Petrol/PHEV",28000,"+5%"),("MG5","Electric",22000,"-20%"),("Cyberster","Electric",3500,"New")],
+    "Suzuki":       [("Swift","Petrol/Mild Hybrid",75000,"+8%"),("Vitara","Petrol/Mild Hybrid",62000,"+5%"),("S-Cross","Petrol/Mild Hybrid",38000,"+3%"),("Ignis","Petrol/Mild Hybrid",22000,"-5%"),("Jimny","Petrol",15000,"+10%")],
+    "Mini":         [("Mini 3/5-door","Petrol/Electric",72000,"+12%"),("Countryman","Petrol/PHEV/Electric",58000,"+18%"),("Cooper E","Electric",22000,"New"),("Aceman","Electric",8000,"New"),("Clubman","Petrol",12000,"-30%")],
+    "Mazda":        [("CX-5","Petrol/Diesel",68000,"-3%"),("CX-30","Petrol/Mild Hybrid",52000,"-5%"),("Mazda3","Petrol",38000,"-8%"),("CX-60","Petrol/PHEV",28000,"+15%"),("MX-30","Mild Hybrid/Electric",8000,"-20%")],
+    "Jeep":         [("Avenger","Petrol/Electric",35000,"+40%"),("Renegade","Petrol/PHEV",48000,"-8%"),("Compass","Petrol/PHEV",38000,"-5%"),("Wrangler","Petrol/PHEV",8500,"-3%"),("Grand Cherokee","Petrol/PHEV",5500,"-10%")],
+    "Jaguar/LR":    [("Defender","Petrol/PHEV",25000,"+8%"),("Range Rover Sport","Petrol/PHEV/Electric",28000,"+5%"),("Discovery Sport","Petrol/PHEV",22000,"-5%"),("Range Rover Evoque","Petrol/PHEV",20000,"-8%"),("Range Rover","Petrol/PHEV/Electric",12000,"+3%")],
+    "Porsche":      [("Cayenne","Petrol/PHEV",35000,"-15%"),("Macan","Electric",28000,"+5%"),("911","Petrol/Hybrid",10000,"+1%"),("Panamera","Petrol/PHEV",7000,"-13%"),("Taycan","Electric",5000,"-45%")],
+    "Alfa Romeo":   [("Tonale","Petrol/PHEV/Mild Hybrid",32000,"+35%"),("Stelvio","Petrol/Diesel",15000,"-5%"),("Giulia","Petrol/Diesel",8500,"-8%"),("Junior","Petrol/Electric",4000,"New")],
+    "BYD":          [("Atto 3","Electric",18000,"+250%"),("Dolphin","Electric",9000,"+300%"),("Han","Electric",8500,"+200%"),("Seal","Electric",7500,"New"),("Tang","Electric",5000,"+150%")],
+    "Mitsubishi":   [("Eclipse Cross","Petrol/PHEV",28000,"+15%"),("ASX","Petrol",18000,"+5%"),("Outlander PHEV","PHEV",12000,"-5%"),("Space Star","Petrol",4500,"-10%")],
+}
 
 def _get_models_for_brand(brand):
     import pandas as pd
