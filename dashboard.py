@@ -339,17 +339,17 @@ with tabs[1]:
         marker_color=[CORAL if c == "Portugal" else (AMBER if c == "Spain" else
                       TEAL if ratio_df[ratio_df["country"]==c]["reg_per_1000_2025"].values[0] > 21.4 else BLUE)
                      for c in ratio_df["country"]],
-        text=[f"{v:.1f}  (1 por every {n} inh.)"
+        text=[f"{v:.1f}  (1 por every {n} people)"
               for v, n in zip(ratio_df["reg_per_1000_2025"], ratio_df["1_per_n_2025"])],
         textposition="outside",
         textfont=dict(size=9),
         customdata=ratio_df[["population_m","sales_2025","1_per_n_2025"]].values,
         hovertemplate=(
             "<b>%{y}</b><br>"
-            "Registrations por 1000 inh.: %{x:.1f}<br>"
+            "Registrations por 1000 people: %{x:.1f}<br>"
             "Total registrations: %{customdata[1]:,.0f}<br>"
             "População: %{customdata[0]:.1f}M<br>"
-            "1 reg. per every %{customdata[2]} inh.<extra></extra>"
+            "1 reg. per every %{customdata[2]} people<extra></extra>"
         ),
     ))
     pt_val = ratio_df[ratio_df["country"]=="Portugal"]["reg_per_1000_2025"].values
@@ -532,8 +532,8 @@ with tabs[4]:
         ("CO₂ g/km (2024)",  "co2",           lambda v: f"{v:.1f} g/km" if v else "—"),
         ("BEV share (2024)", "bev",           lambda v: f"{v:.1f}%" if v else "—"),
         ("Vehicles produced","produced",    lambda v: f"{v:,.0f}" if v else "—"),
-        ("Reg./1,000 inh.", "reg_per_1000",  lambda v: f"{v:.1f}" if v else "—"),
-        ("1 reg. per",  "1_per_n",       lambda v: f"every {v} inh." if v else "—"),
+        ("Reg. per 1,000 people", "reg_per_1000",  lambda v: f"{v:.1f}" if v else "—"),
+        ("1 reg. per",  "1_per_n",       lambda v: f"every {v} people" if v else "—"),
     ]
 
     def diff_str(key, va, vb):
@@ -542,7 +542,7 @@ with tabs[4]:
             d = float(vb) - float(va)
             if key == "pct_change": return f"{d:+.1f} pp"
             if key in ("co2","bev","reg_per_1000"): return f"{d:+.1f}"
-            if key == "1_per_n": return f"{d:+.0f} inh."
+            if key == "1_per_n": return f"{d:+.0f} people"
             return f"{d:+,.0f}"
         except: return "—"
 
@@ -571,10 +571,10 @@ with tabs[4]:
 <table style="width:100%;border-collapse:collapse;background:#fff;border-radius:8px;overflow:hidden;border:0.5px solid #e0e0e0">
   <thead>
     <tr style="background:#f5f5f5">
-      <th style="padding:12px;text-align:left;font-size:12px;color:#888;font-weight:600;text-transform:uppercase">Métrica</th>
+      <th style="padding:12px;text-align:left;font-size:12px;color:#888;font-weight:600;text-transform:uppercase">Metric</th>
       <th style="padding:12px;text-align:left;font-size:14px;color:#0d1b2a;font-weight:700">{ca}</th>
       <th style="padding:12px;text-align:left;font-size:14px;color:#0d1b2a;font-weight:700">{cb}</th>
-      <th style="padding:12px;text-align:left;font-size:12px;color:#888;font-weight:600;text-transform:uppercase">Diferença</th>
+      <th style="padding:12px;text-align:left;font-size:12px;color:#888;font-weight:600;text-transform:uppercase">Difference</th>
     </tr>
   </thead>
   <tbody>{rows_html}</tbody>
@@ -582,7 +582,7 @@ with tabs[4]:
 """, unsafe_allow_html=True)
 
     st.markdown("<br>", unsafe_allow_html=True)
-    st.markdown('<div class="data-note">Source: ACEA / ICCT 2024-2025 · Dados em number of registrations, not monetary value</div>', unsafe_allow_html=True)
+    st.markdown('<div class="data-note">Source: ACEA / ICCT 2024-2025 · number of new passenger car registrations, not monetary value</div>', unsafe_allow_html=True)
 
 # ── TAB 6: TECHNOLOGY ─────────────────────────────────────────────────────────
 with tabs[5]:
