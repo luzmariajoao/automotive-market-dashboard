@@ -1,5 +1,5 @@
 """
-Loader unificado — todos os dados embutidos, sem dependências externas.
+Unified loader — all data embedded, no external file dependencies.
 Funciona local e no Streamlit Cloud.
 """
 import pandas as pd
@@ -53,29 +53,65 @@ def load_sales_by_country(year=2025):
         return df.sort_values("sales_2024", ascending=False).reset_index(drop=True)
 
 def load_top_brands(year=2025):
+    # Source: ACEA / best-selling-cars.com — EU+EFTA+UK full year
     data_2025 = [
-        (1,"Volkswagen","Volkswagen Group",1452704,1371854,5.9,10.9),
-        (2,"Toyota","Toyota Group",1005000,928767,8.1,7.6),
-        (3,"Skoda","Volkswagen Group",840179,766469,9.6,6.3),
-        (4,"BMW","BMW Group",800585,775119,3.3,6.0),
-        (5,"Renault","Renault Group",750605,699151,7.4,5.7),
-        (6,"Mercedes","Mercedes-Benz",710000,684027,3.8,5.4),
-        (7,"Audi","Volkswagen Group",664680,662664,0.3,5.0),
-        (8,"Peugeot","Stellantis",637834,641376,-0.6,4.8),
-        (9,"Dacia","Renault Group",597088,578953,3.1,4.5),
-        (10,"Hyundai","Hyundai Group",535205,534198,0.2,4.0),
+        (1,  "Volkswagen",   "Volkswagen Group",  1452704, 1371854,  5.9, 10.9),
+        (2,  "Toyota",       "Toyota Group",       855000,  928767, -7.4,  6.4),
+        (3,  "Skoda",        "Volkswagen Group",   840179,  766469,  9.6,  6.3),
+        (4,  "BMW",          "BMW Group",          800585,  775119,  3.3,  6.0),
+        (5,  "Renault",      "Renault Group",      750605,  699151,  7.4,  5.7),
+        (6,  "Mercedes",     "Mercedes-Benz",      710000,  684027,  3.8,  5.4),
+        (7,  "Audi",         "Volkswagen Group",   664680,  662664,  0.3,  5.0),
+        (8,  "Peugeot",      "Stellantis",         637834,  641376, -0.6,  4.8),
+        (9,  "Dacia",        "Renault Group",      597088,  578953,  3.1,  4.5),
+        (10, "Hyundai",      "Hyundai Group",      535205,  534198,  0.2,  4.0),
+        (11, "Kia",          "Hyundai Group",      507304,  529319, -4.2,  3.8),
+        (12, "Opel/Vauxhall","Stellantis",         399782,  414042, -3.4,  3.0),
+        (13, "Volvo",        "Volvo Cars",         395000,  369689,  6.8,  3.0),
+        (14, "Ford",         "Ford",               380000,  426307,-10.9,  2.9),
+        (15, "Citroen",      "Stellantis",         352521,  358892, -1.8,  2.7),
+        (16, "Cupra",        "Volkswagen Group",   297724,  219637, 35.6,  2.2),
+        (17, "Fiat",         "Stellantis",         271098,  304151,-10.9,  2.0),
+        (18, "Nissan",       "Nissan",             252000,  307276,-18.0,  1.9),
+        (19, "Mini",         "BMW Group",          169694,  148303, 14.4,  1.3),
+        (20, "Seat",         "Volkswagen Group",   215636,  263771,-18.2,  1.6),
+        (21, "MG",           "SAIC Motor",         210000,  244595,-14.1,  1.6),
+        (22, "Suzuki",       "Suzuki",             203132,  187852,  8.1,  1.5),
+        (23, "Mazda",        "Mazda",              172347,  182535, -5.6,  1.3),
+        (24, "Tesla",        "Tesla",              240000,  327034,-26.6,  1.8),
+        (25, "Jeep",         "Stellantis",         126284,  130486, -3.2,  1.0),
+        (26, "Jaguar/LR",    "JLR",                150657,  145490,  3.6,  1.1),
+        (27, "Porsche",      "Volkswagen Group",    91304,  106922,-14.6,  0.7),
+        (28, "Alfa Romeo",   "Stellantis",          59532,   44919, 32.5,  0.4),
+        (29, "BYD",          "BYD",                 48000,   13000,269.2,  0.4),
+        (30, "Mitsubishi",   "Mitsubishi",          60873,   42823, 42.2,  0.5),
     ]
     data_2024 = [
-        (1,"Volkswagen","Volkswagen Group",1371465,1357842,1.0,10.6),
-        (2,"Toyota","Toyota Group",928767,828931,12.0,7.2),
-        (3,"BMW","BMW Group",774925,729073,6.3,6.0),
-        (4,"Skoda","Volkswagen Group",766510,679984,12.7,5.9),
-        (5,"Renault","Renault Group",699214,681058,2.7,5.4),
-        (6,"Mercedes","Mercedes-Benz",684027,671973,1.8,5.3),
-        (7,"Audi","Volkswagen Group",663239,733305,-9.6,5.1),
-        (8,"Peugeot","Stellantis",641264,637178,0.6,4.9),
-        (9,"Dacia","Renault Group",578935,557154,3.9,4.5),
-        (10,"Hyundai","Hyundai Group",534360,534307,0.0,4.1),
+        (1,  "Volkswagen",   "Volkswagen Group",  1371465, 1357842,  1.0, 10.6),
+        (2,  "Toyota",       "Toyota Group",       928767,  828931, 12.0,  7.2),
+        (3,  "BMW",          "BMW Group",          774925,  729073,  6.3,  6.0),
+        (4,  "Skoda",        "Volkswagen Group",   766510,  679984, 12.7,  5.9),
+        (5,  "Renault",      "Renault Group",      699214,  681058,  2.7,  5.4),
+        (6,  "Mercedes",     "Mercedes-Benz",      684027,  671973,  1.8,  5.3),
+        (7,  "Audi",         "Volkswagen Group",   663239,  733305, -9.6,  5.1),
+        (8,  "Peugeot",      "Stellantis",         641376,  637178,  0.6,  4.9),
+        (9,  "Dacia",        "Renault Group",      578953,  557154,  3.9,  4.5),
+        (10, "Hyundai",      "Hyundai Group",      534198,  534307,  0.0,  4.1),
+        (11, "Kia",          "Hyundai Group",      529319,  499321,  6.0,  4.1),
+        (12, "Ford",         "Ford",               426307,  513481,-17.0,  3.3),
+        (13, "Opel/Vauxhall","Stellantis",         414042,  451238, -8.2,  3.2),
+        (14, "Citroen",      "Stellantis",         358892,  374100, -4.1,  2.8),
+        (15, "Volvo",        "Volvo Cars",         369689,  287832, 28.4,  2.9),
+        (16, "Fiat",         "Stellantis",         304151,  321800, -5.5,  2.3),
+        (17, "Nissan",       "Nissan",             307276,  293988,  4.5,  2.4),
+        (18, "Seat",         "Volkswagen Group",   263771,  253291,  4.1,  2.0),
+        (19, "Cupra",        "Volkswagen Group",   219637,  166216, 32.1,  1.7),
+        (20, "MG",           "SAIC Motor",         244595,  232721,  5.1,  1.9),
+        (21, "Suzuki",       "Suzuki",             187852,  175000,  7.3,  1.4),
+        (22, "Tesla",        "Tesla",              327034,  366829,-10.8,  2.5),
+        (23, "Mazda",        "Mazda",              182535,  193000, -5.4,  1.4),
+        (24, "Mini",         "BMW Group",          148303,  145000,  2.3,  1.1),
+        (25, "Jeep",         "Stellantis",         130486,  141000, -7.4,  1.0),
     ]
     if year == 2025:
         return pd.DataFrame(data_2025, columns=["rank","brand","group","sales_2025","sales_2024","pct_change","market_share"])
@@ -191,7 +227,7 @@ def build_yoy_comparison():
     return c24.merge(c25, on="country", how="outer").sort_values("sales_2025", ascending=False)
 
 def load_ratio_per_capita():
-    """Rácio de novas matrículas por habitante — 2025"""
+    """New car registrations per person — 2025"""
     sales_pop = {
         "Austria":(253789,284978,9.1),"Belgium":(448277,414770,11.7),
         "Bulgaria":(42941,49419,6.5),"Croatia":(65020,69841,3.9),
