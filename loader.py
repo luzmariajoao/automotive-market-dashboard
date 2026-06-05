@@ -119,19 +119,35 @@ def load_top_brands(year=2025):
         return pd.DataFrame(data_2024, columns=["rank","brand","group","sales_2024","sales_2023","pct_change","market_share"])
 
 def load_top_models(year=2024):
-    data = [
-        (1,"Sandero","Dacia","Renault Group","Petrol/LPG","Top model in Spain and Portugal"),
-        (2,"Clio","Renault","Renault Group","Petrol/Hybrid","Up from 4th in 2023"),
-        (3,"Golf","Volkswagen","Volkswagen Group","Petrol/Diesel","215,700 units +17%"),
-        (4,"Model Y","Tesla","Tesla","Electric","#1 in NL SE CH DK NO"),
-        (5,"T-Roc","Volkswagen","Volkswagen Group","Petrol/Diesel","Slipped one position"),
+    # Source: JATO Dynamics / best-selling-cars.com
+    data_2024 = [
+        (1,"Sandero","Dacia","Renault Group","Petrol/LPG","#1 for first time — dethroned VW Golf"),
+        (2,"Clio","Renault","Renault Group","Petrol/Hybrid","2nd consecutive year in 2nd place"),
+        (3,"Golf","Volkswagen","Volkswagen Group","Petrol/Diesel","215,700 units, +17% — dropped from #1"),
+        (4,"Model Y","Tesla","Tesla","Electric","#1 in NL, SE, CH, DK, NO"),
+        (5,"T-Roc","Volkswagen","Volkswagen Group","Petrol/Diesel","Slipped one position from 4th"),
         (6,"208","Peugeot","Stellantis","Petrol/Electric","Top model in 2022"),
         (7,"Yaris Cross","Toyota","Toyota Group","Hybrid","Improved one rank"),
         (8,"Octavia","Skoda","Volkswagen Group","Petrol/Diesel","Improved two ranks"),
         (9,"Duster","Dacia","Renault Group","Petrol/LPG/Hybrid","Entered top 10 from 15th"),
         (10,"Yaris","Toyota","Toyota Group","Hybrid","Entered top 10 from 14th"),
     ]
-    return pd.DataFrame(data, columns=["rank","model","brand","group","fuel_type","notes"])
+    # Source: best-selling-cars.com full year 2025 — March 2026
+    data_2025 = [
+        (1,"Sandero","Dacia","Renault Group","Petrol/LPG","243,676 units — 2nd consecutive #1 (-9.8%)"),
+        (2,"Clio","Renault","Renault Group","Petrol/Hybrid","~238,000 units (+6%) — 2nd consecutive"),
+        (3,"T-Roc","Volkswagen","Volkswagen Group","Petrol/Diesel","211,241 units — up from #5 in 2024"),
+        (4,"Tiguan","Volkswagen","Volkswagen Group","Petrol/Diesel","197,000 units, +19.7% — up from #12"),
+        (5,"Golf","Volkswagen","Volkswagen Group","Petrol/Diesel","195,455 units — slipped from #3"),
+        (6,"208","Peugeot","Stellantis","Petrol/Electric","~185,000 units — VW three in top 5"),
+        (7,"Yaris Cross","Toyota","Toyota Group","Hybrid","~175,000 units — hybrid dominance"),
+        (8,"Duster","Dacia","Renault Group","Petrol/LPG/Hybrid","~168,000 units, +22% — new gen"),
+        (9,"Yaris","Toyota","Toyota Group","Hybrid","~148,000 units — 2nd Toyota in top 10"),
+        (10,"C3","Citroen","Stellantis","Petrol/Electric","~145,000 units — new entry (Model Y out)"),
+    ]
+    if year == 2025:
+        return pd.DataFrame(data_2025, columns=["rank","model","brand","group","fuel_type","notes"])
+    return pd.DataFrame(data_2024, columns=["rank","model","brand","group","fuel_type","notes"])
 
 def load_manufacturer_groups(year=2025):
     if year == 2025:
