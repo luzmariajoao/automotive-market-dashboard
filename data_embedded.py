@@ -88,4 +88,103 @@ def get_top_models():
         (6,"208","Peugeot","Stellantis","Petrol/Electric","Top model in 2022"),
         (7,"Yaris Cross","Toyota","Toyota Group","Hybrid","Improved one rank"),
         (8,"Octavia","Skoda","Volkswagen Group","Petrol/Diesel","Improved two ranks"),
-        (9,"Duster","Dacia","Renault Group","Petrol
+        (9,"Duster","Dacia","Renault Group","Petrol/LPG/Hybrid","Entered top 10 from 15th"),
+        (10,"Yaris","Toyota","Toyota Group","Hybrid","Entered top 10 from 14th"),
+    ]
+    return pd.DataFrame(data, columns=["rank","model","brand","group","fuel_type","notes"])
+
+def get_fuel_type_mix():
+    data = [
+        (2021,39.9,19.8,9.1,8.9,19.6,2.8,40.6),
+        (2022,36.4,22.7,12.1,9.4,16.4,3.0,47.3),
+        (2023,35.3,25.8,14.6,7.7,13.6,3.0,51.1),
+        (2024,33.3,30.9,13.6,7.1,11.9,3.1,54.8),
+    ]
+    return pd.DataFrame(data, columns=["year","petrol_pct","diesel_pct","bev_pct","phev_pct","hybrid_pct","alternative_pct","total_alternative_pct"])
+
+def get_segment_share():
+    data = [
+        ("SUV","SUV",53,2024),("Small","A+B",19,2024),("Lower medium","C",15,2024),
+        ("Upper medium","D",7,2024),("MPV","MPV",4,2024),("Luxury","E+F",2,2024),
+    ]
+    return pd.DataFrame(data, columns=["segment","code","share_pct","year"])
+
+def get_co2_by_country():
+    data = [
+        ("Finland","EU",60.9,33.0),("Sweden","EU",61.0,33.0),("Denmark","EU",73.3,51.0),
+        ("Netherlands","EU",80.0,33.0),("Norway","EFTA",35.0,89.0),("Belgium","EU",95.0,15.0),
+        ("Portugal","EU",100.0,14.0),("France","EU",102.0,16.9),("Austria","EU",105.0,12.0),
+        ("Spain","EU",107.0,6.0),("EU average","EU",107.8,None),
+        ("Germany","EU",117.0,13.5),("Italy","EU",120.0,4.5),
+    ]
+    df = pd.DataFrame(data, columns=["country","region","co2_gkm_2024","bev_share_pct_2024"])
+    return df.sort_values("co2_gkm_2024")
+
+def get_cars_per_1000():
+    data = [
+        ("Netherlands",69),("Luxembourg",38),("Slovenia",34),("Belgium",29),
+        ("Germany",28),("Denmark",26),("Austria",26),("Italy",25),("Sweden",25),
+        ("France",23),("Ireland",25),("Czechia",23),("Spain",21),("Portugal",21),
+        ("Estonia",21),("Slovakia",21),("Croatia",20),("Cyprus",18),("Poland",17),
+        ("Malta",17),("Finland",16),("Greece",15),("Hungary",14),("Lithuania",13),
+        ("Latvia",13),("Romania",13),("Bulgaria",10),("EU average",24),
+    ]
+    df = pd.DataFrame(data, columns=["country","cars_per_1000"])
+    return df.sort_values("cars_per_1000", ascending=False)
+
+def get_production_by_country():
+    data = [
+        ("Germany",3942396,198021,142087,4497),("Spain",1872988,467469,32554,1400),
+        ("France",849437,498576,68270,2703),("Czechia",1446855,0,1429,4290),
+        ("Slovakia",993750,0,0,0),("Romania",473110,0,0,0),
+        ("Hungary",435541,0,839,0),("Poland",224017,336347,43885,7019),
+        ("Italy",309336,224454,55066,1445),("Belgium",197624,38413,0,201),
+        ("Portugal",229095,92042,2205,173),("Sweden",270807,33809,0,2010),
+        ("Netherlands",0,7515,60319,649),("Slovenia",60903,0,0,25),
+        ("Austria",72335,0,0,0),("Finland",22760,0,0,46),
+    ]
+    df = pd.DataFrame(data, columns=["country","cars_produced","vans_produced","trucks_produced","buses_produced"])
+    return df[df["cars_produced"]>0].sort_values("cars_produced", ascending=False)
+
+def get_manufacturer_groups(year=2025):
+    if year == 2025:
+        data = [
+            ("Volkswagen Group",3571429,3399294,5.1,26.9),
+            ("Stellantis",1892556,1969927,-3.9,14.3),
+            ("Renault Group",1358242,1282405,5.9,10.2),
+            ("Toyota Group",1005000,1006073,-0.1,7.6),
+            ("Hyundai Group",1042509,1063355,-2.0,7.9),
+            ("BMW Group",970279,923422,5.1,7.3),
+            ("Mercedes-Benz",710000,696907,1.9,5.4),
+            ("Volvo Cars",395000,369689,6.8,3.0),
+            ("Ford",380000,426307,-10.9,2.9),
+            ("Tesla",240000,327034,-26.6,1.8),
+        ]
+        cols = ["group","sales_2025","sales_2024","pct_change","market_share"]
+    else:
+        data = [
+            ("Volkswagen Group",3407242,3325175,2.5,26.3),
+            ("Stellantis",1969594,2125142,-7.3,15.2),
+            ("Renault Group",1282453,1242229,3.2,9.9),
+            ("Hyundai Group",1063517,1106604,-3.9,8.2),
+            ("Toyota Group",1006073,889321,13.1,7.8),
+            ("BMW Group",923202,913985,1.0,7.1),
+            ("Mercedes-Benz",696907,699887,-0.4,5.4),
+            ("Ford",426307,513481,-17.0,3.3),
+            ("Volvo Cars",369689,287832,28.4,2.9),
+            ("Tesla",327034,366829,-10.8,2.5),
+            ("Nissan",307276,293988,4.5,2.4),
+            ("SAIC Motor",244595,232721,5.1,1.9),
+            ("Suzuki",203132,187852,8.1,1.6),
+            ("Mazda",172347,182535,-5.6,1.3),
+            ("Jaguar Land Rover Group",150657,145490,3.6,1.2),
+            ("Honda",74682,60596,23.2,0.6),
+            ("Mitsubishi",60873,42823,42.2,0.5),
+        ]
+        cols = ["group","sales_2024","sales_2023","pct_change","market_share"]
+    return pd.DataFrame(data, columns=cols)
+
+def get_yoy_comparison():
+    df24 = get_sales_by_country_2024()[["country","region","sales_2024"]]
+    df25 = get_sales_by_country_2025()[["country","sales_2025","pct_change"]]
+    return df24.merge(df25, on="country", how="outer").sort_values("sales_2025", ascending=False)
