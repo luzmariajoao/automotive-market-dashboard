@@ -14,6 +14,11 @@ import streamlit as st
 import plotly.express as px
 import plotly.graph_objects as go
 import pandas as pd
+from data_embedded import get_registrations_per_capita as _get_ratio
+
+def get_ratio_data():
+    return _get_ratio()
+
 from loader import (
     load_sales_by_country, load_top_brands, load_top_models,
     load_manufacturer_groups, load_fuel_type_mix, load_segment_share,
@@ -103,6 +108,7 @@ def get_data():
         "yoy": yoy,
         "grp24": load_manufacturer_groups(2024),
         "grp25": load_manufacturer_groups(2025),
+        "ratio": get_ratio_data(),
     }
 
 D = get_data()
@@ -171,7 +177,7 @@ with st.sidebar:
 
 # ── Header ────────────────────────────────────────────────────────────────────
 st.markdown(f'<div class="report-title">🚗 European Car Market — {year}</div>', unsafe_allow_html=True)
-st.markdown(f"**{len(selected_countries)} markets selected · {region_filter} · Source: ACEA / JATO / S&P Global Mobility**")
+st.markdown(f"**{len(selected_countries)} mercados seleccionados · {region_filter} · Dados: nº de novas matrículas de veículos de passageiros · Fonte: ACEA / JATO / S&P Global Mobility**")
 st.divider()
 
 # ── KPIs ──────────────────────────────────────────────────────────────────────
@@ -222,8 +228,8 @@ with tabs[0]:
     col_ctrl, _ = st.columns([1, 2])
     with col_ctrl:
         map_metric = st.selectbox("Map metric", [
-            "Sales volume",
-            "YoY change (%)",
+            "Registos de veículos",
+            "Evolução YoY (%)",
             "CO₂ emissions (g/km)",
             "BEV share (%)",
             "Cars per 1,000 inhabitants",
@@ -239,10 +245,10 @@ with tabs[0]:
     c1k = load_cars_per_1000()
     map_df = map_df.merge(c1k[["country","cars_per_1000"]], on="country", how="left")
 
-    if map_metric == "Sales volume":
+    if map_metric == "Registos de veículos":
         color_col = "sales_2025"; title = f"New car registrations {year}"; fmt = ":,.0f"
         scale = [[0,"#E6F1FB"],[0.25,"#85B7EB"],[0.6,"#378ADD"],[1,"#042C53"]]
-    elif map_metric == "YoY change (%)":
+    elif map_metric == "Evolução YoY (%)":
         color_col = "pct_change"; title = "YoY change 2024→2025 (%)"; fmt = ":+.1f"
         scale = [[0,"#D85A30"],[0.5,"#f5f5f5"],[1,"#1D9E75"]]
     elif map_metric == "CO₂ emissions (g/km)":
@@ -283,7 +289,7 @@ with tabs[1]:
     col_r1, col_r2 = st.columns(2)
 
     with col_r1:
-        st.markdown(f"##### Top {top_n} countries by sales — {year}")
+        st.markdown(f"##### Top {top_n} mercados — nº matrículas de passageiros ({year})")
         top = df.nlargest(top_n, sales_col).sort_values(sales_col)
         fig = go.Figure(go.Bar(
             x=top[sales_col], y=top["country"], orientation="h",
@@ -324,6 +330,49 @@ with tabs[1]:
         tbl.columns = ["#","Model","Brand","Fuel"]
         st.dataframe(tbl, hide_index=True, use_container_width=True, height=280)
 
+    st.divider()
+    st.markdown("##### Rácio de matrículas por habitante — 2025 (nº matrículas por 1.000 habitantes)")
+    ratio_df = D["ratio"].copy()
+    ratio_df = ratio_df[ratio_df["country"].isin(selected_countries)].sort_values("reg_per_1000_2025")
+
+    fig_ratio = go.Figure()
+    fig_ratio.add_trace(go.Bar(
+        x=ratio_df["reg_per_1000_2025"],
+        y=ratio_df["country"],
+        orientation="h",
+        marker_color=[CORAL if c == "Portugal" else (AMBER if c == "Spain" else
+                      TEAL if ratio_df[ratio_df["country"]==c]["reg_per_1000_2025"].values[0] > 21.4 else BLUE)
+                     for c in ratio_df["country"]],
+        text=[f"{v:.1f}  (1 por cada {n} hab.)"
+              for v, n in zip(ratio_df["reg_per_1000_2025"], ratio_df["1_per_n_2025"])],
+        textposition="outside",
+        textfont=dict(size=9),
+        customdata=ratio_df[["population_m","sales_2025","1_per_n_2025"]].values,
+        hovertemplate=(
+            "<b>%{y}</b><br>"
+            "Matrículas por 1000 hab.: %{x:.1f}<br>"
+            "Total matrículas: %{customdata[1]:,.0f}<br>"
+            "População: %{customdata[0]:.1f}M<br>"
+            "1 matrícula por cada %{customdata[2]} hab.<extra></extra>"
+        ),
+    ))
+    pt_val = ratio_df[ratio_df["country"]=="Portugal"]["reg_per_1000_2025"].values
+    if len(pt_val):
+        fig_ratio.add_vline(x=pt_val[0], line_dash="dot", line_color=CORAL,
+            annotation_text=f"Portugal {pt_val[0]:.1f}",
+            annotation_font=dict(size=9, color=CORAL))
+    fig_ratio.update_layout(
+        height=max(350, len(ratio_df)*18),
+        margin=dict(l=0, r=200, t=20, b=10),
+        xaxis=dict(title="Novas matrículas por 1.000 habitantes (2025)", gridcolor=LGRAY),
+        yaxis=dict(tickfont=dict(size=10)),
+        paper_bgcolor="rgba(0,0,0,0)", plot_bgcolor="rgba(0,0,0,0)",
+        font=dict(size=11),
+        showlegend=False,
+    )
+    st.plotly_chart(fig_ratio, use_container_width=True)
+    st.markdown('<div class="data-note">Fonte: ACEA 2025 · População: Eurostat 2024 · Nota: nº de novas matrículas de passageiros, não valor monetário</div>', unsafe_allow_html=True)
+
 # ── TAB 3: YOY EVOLUTION ─────────────────────────────────────────────────────
 with tabs[2]:
     st.markdown('<div class="section-hd">Year-on-Year Evolution</div>', unsafe_allow_html=True)
@@ -355,7 +404,7 @@ with tabs[2]:
     fig.update_layout(
         height=max(400, len(yoy)*18),
         margin=dict(l=0,r=70,t=30,b=10),
-        xaxis=dict(title="% change vs 2024", gridcolor=LGRAY, zeroline=False),
+        xaxis=dict(title="Evolução YoY vs 2024 (%)", gridcolor=LGRAY, zeroline=False),
         yaxis=dict(tickfont=dict(size=10)),
         paper_bgcolor="rgba(0,0,0,0)", plot_bgcolor="rgba(0,0,0,0)", font=dict(size=11))
     st.plotly_chart(fig, use_container_width=True)
@@ -463,6 +512,7 @@ with tabs[4]:
         r24 = D["c24"][D["c24"]["country"]==country]
         co2r = D["co2"][D["co2"]["country"]==country]
         prodr = D["prod"][D["prod"]["country"]==country] if len(D["prod"][D["prod"]["country"]==country]) else None
+        ratio_r = D["ratio"][D["ratio"]["country"]==country]
         return {
             "country": country,
             "sales_2025": int(r25["sales_2025"].values[0]) if len(r25) else 0,
@@ -472,71 +522,71 @@ with tabs[4]:
             "co2": float(co2r["co2_gkm_2024"].values[0]) if len(co2r) else None,
             "bev": float(co2r["bev_share_pct_2024"].values[0]) if len(co2r) else None,
             "produced": int(prodr["cars_produced"].values[0]) if prodr is not None and len(prodr) else 0,
+            "reg_per_1000": float(ratio_r["reg_per_1000_2025"].values[0]) if len(ratio_r) else None,
+            "1_per_n": int(ratio_r["1_per_n_2025"].values[0]) if len(ratio_r) else None,
         }
 
     ra = get_country_row(ca)
     rb = get_country_row(cb)
 
     metrics = [
-        ("Sales 2025", "sales_2025", ":,.0f", "units"),
-        ("Sales 2024", "sales_2024", ":,.0f", "units"),
-        ("YoY change", "pct_change", ":+.1f", "%"),
-        ("CO₂ g/km", "co2", ":.1f", "g/km"),
-        ("BEV share", "bev", ":.1f", "%"),
-        ("Cars produced", "produced", ":,.0f", "units"),
+        ("Matrículas 2025",  "sales_2025",    lambda v: f"{v:,.0f}"),
+        ("Matrículas 2024",  "sales_2024",    lambda v: f"{v:,.0f}"),
+        ("Evolução YoY",     "pct_change",    lambda v: f"{v:+.1f}%"),
+        ("CO₂ g/km (2024)",  "co2",           lambda v: f"{v:.1f} g/km" if v else "—"),
+        ("Quota BEV (2024)", "bev",           lambda v: f"{v:.1f}%" if v else "—"),
+        ("Veículos produzidos","produced",    lambda v: f"{v:,.0f}" if v else "—"),
+        ("Matr./1.000 hab.", "reg_per_1000",  lambda v: f"{v:.1f}" if v else "—"),
+        ("1 matrícula por",  "1_per_n",       lambda v: f"cada {v} hab." if v else "—"),
     ]
 
-    col_a, col_vs, col_b = st.columns([2, 0.5, 2])
+    def diff_str(key, va, vb):
+        if va is None or vb is None: return "—"
+        try:
+            d = float(vb) - float(va)
+            if key == "pct_change": return f"{d:+.1f} pp"
+            if key in ("co2","bev","reg_per_1000"): return f"{d:+.1f}"
+            if key == "1_per_n": return f"{d:+.0f} hab."
+            return f"{d:+,.0f}"
+        except: return "—"
 
-    with col_a:
-        st.markdown(f"### {ca}")
-        for label, key, fmt, unit in metrics:
-            va = ra.get(key)
-            if va is not None:
-                st.metric(label, f"{va:{fmt[1:]}}" + (" " + unit if unit != "units" else ""))
+    # Tabela alinhada em HTML
+    rows_html = ""
+    for label, key, fmt in metrics:
+        va = ra.get(key)
+        vb = rb.get(key)
+        va_str = fmt(va) if va is not None else "—"
+        vb_str = fmt(vb) if vb is not None else "—"
+        d_str  = diff_str(key, va, vb)
+        try:
+            d_num = float(vb) - float(va) if va is not None and vb is not None else 0
+            d_color = "#1D9E75" if d_num > 0 else ("#D85A30" if d_num < 0 else "#888")
+        except:
+            d_color = "#888"
+        rows_html += f"""
+        <tr>
+          <td style="padding:10px 12px;color:#888;font-size:13px;border-bottom:0.5px solid #f0f0f0">{label}</td>
+          <td style="padding:10px 12px;font-size:15px;font-weight:600;color:#0d1b2a;border-bottom:0.5px solid #f0f0f0">{va_str}</td>
+          <td style="padding:10px 12px;font-size:15px;font-weight:600;color:#0d1b2a;border-bottom:0.5px solid #f0f0f0">{vb_str}</td>
+          <td style="padding:10px 12px;font-size:13px;color:{d_color};font-weight:500;border-bottom:0.5px solid #f0f0f0">{d_str}</td>
+        </tr>"""
 
-    with col_vs:
-        st.markdown("<br><br>", unsafe_allow_html=True)
-        st.markdown("### vs")
-
-    with col_b:
-        st.markdown(f"### {cb}")
-        for label, key, fmt, unit in metrics:
-            vb = rb.get(key)
-            va = ra.get(key)
-            if vb is not None and va is not None:
-                delta = vb - va
-                st.metric(label,
-                    f"{vb:{fmt[1:]}}" + (" " + unit if unit != "units" else ""),
-                    f"{delta:+,.0f}" if unit == "units" else f"{delta:+.1f}")
+    st.markdown(f"""
+<table style="width:100%;border-collapse:collapse;background:#fff;border-radius:8px;overflow:hidden;border:0.5px solid #e0e0e0">
+  <thead>
+    <tr style="background:#f5f5f5">
+      <th style="padding:12px;text-align:left;font-size:12px;color:#888;font-weight:600;text-transform:uppercase">Métrica</th>
+      <th style="padding:12px;text-align:left;font-size:14px;color:#0d1b2a;font-weight:700">{ca}</th>
+      <th style="padding:12px;text-align:left;font-size:14px;color:#0d1b2a;font-weight:700">{cb}</th>
+      <th style="padding:12px;text-align:left;font-size:12px;color:#888;font-weight:600;text-transform:uppercase">Diferença</th>
+    </tr>
+  </thead>
+  <tbody>{rows_html}</tbody>
+</table>
+""", unsafe_allow_html=True)
 
     st.markdown("<br>", unsafe_allow_html=True)
-
-    # Radar / bar comparison
-    compare_metrics = ["sales_2025","sales_2024","pct_change","co2","bev","produced"]
-    compare_labels = ["Sales 2025","Sales 2024","YoY %","CO₂ g/km","BEV %","Produced"]
-
-    fig = go.Figure()
-    for country_row, color, name in [(ra, BLUE, ca), (rb, CORAL, cb)]:
-        vals = []
-        for m in ["sales_2025","pct_change","bev","produced"]:
-            v = country_row.get(m)
-            vals.append(v if v is not None else 0)
-        fig.add_trace(go.Bar(
-            name=name,
-            x=["Sales 2025","YoY %","BEV %","Produced"],
-            y=vals,
-            marker_color=color,
-        ))
-
-    fig.update_layout(barmode="group", height=300,
-        margin=dict(l=0,r=0,t=20,b=20),
-        yaxis=dict(gridcolor=LGRAY),
-        legend=dict(orientation="h"),
-        paper_bgcolor="rgba(0,0,0,0)", plot_bgcolor="rgba(0,0,0,0)",
-        font=dict(size=11))
-    st.plotly_chart(fig, use_container_width=True)
-    st.markdown('<div class="data-note">Note: raw values are on different scales — use as directional comparison only</div>', unsafe_allow_html=True)
+    st.markdown('<div class="data-note">Fonte: ACEA / ICCT 2024-2025 · Dados em nº de matrículas de veículos de passageiros, não valor monetário</div>', unsafe_allow_html=True)
 
 # ── TAB 6: TECHNOLOGY ─────────────────────────────────────────────────────────
 with tabs[5]:
@@ -622,14 +672,14 @@ with tabs[6]:
     col_p, col_t = st.columns([1.5, 1])
 
     with col_p:
-        st.markdown("##### Production vs domestic sales — 2024")
+        st.markdown("##### Veículos produzidos vs matrículas nacionais (nº unidades, 2024)")
         n_prod = st.slider("Show top N producers", 5, len(prod), min(12, len(prod)))
         prod_top = prod.head(n_prod)
 
         fig = go.Figure()
         fig.add_trace(go.Bar(name="Produced", x=prod_top["country"],
             y=prod_top["cars_produced"], marker_color=BLUE))
-        fig.add_trace(go.Bar(name="Registered", x=prod_top["country"],
+        fig.add_trace(go.Bar(name="Matrículas", x=prod_top["country"],
             y=prod_top["sales_2024"], marker_color="#B5D4F4"))
         fig.update_layout(barmode="group", height=350,
             margin=dict(l=0,r=0,t=10,b=60),
@@ -642,9 +692,9 @@ with tabs[6]:
     with col_t:
         st.markdown("##### Net trade position")
         tbl = prod[["country","cars_produced","sales_2024","balance","net"]].copy()
-        tbl.columns = ["Country","Produced","Registered","Balance","Position"]
+        tbl.columns = ["Country","Produced","Matrículas","Balance","Position"]
         tbl["Produced"] = tbl["Produced"].apply(lambda x: f"{x:,.0f}")
-        tbl["Registered"] = tbl["Registered"].apply(lambda x: f"{x:,.0f}")
+        tbl["Matrículas"] = tbl["Matrículas"].apply(lambda x: f"{x:,.0f}")
         tbl["Balance"] = tbl["Balance"].apply(lambda x: f"{x:+,.0f}")
         st.dataframe(tbl, hide_index=True, use_container_width=True, height=380)
 
@@ -707,17 +757,24 @@ The interactive charts below use <strong>illustrative estimates</strong> based o
         st.plotly_chart(fig, use_container_width=True)
 
     with d3:
-        st.markdown("**Purchase motivation**")
-        motiv = pd.DataFrame({
-            "Motivation":["Reliability","Running costs","Brand","Safety","Design","Green/EV"],
-            "Score":[78,65,52,48,41,33]}).sort_values("Score")
+        st.markdown(f"**Motivação de compra — {demo_segment}**")
+        motiv_data = {
+            "All segments": {"Fiabilidade":78,"Custo operacional":65,"Marca":52,"Segurança":48,"Design":41,"Verde/EV":33},
+            "SUV":          {"Fiabilidade":72,"Espaço/família":70,"Marca":58,"Segurança":55,"Design":48,"Verde/EV":30},
+            "Small":        {"Custo operacional":82,"Preço":78,"Fiabilidade":65,"Facilidade urbana":60,"Design":35,"Verde/EV":28},
+            "Medium":       {"Fiabilidade":76,"Custo operacional":68,"Marca":55,"Segurança":50,"Design":44,"Verde/EV":35},
+            "Luxury":       {"Marca":85,"Design":80,"Desempenho":75,"Prestígio":70,"Tecnologia":65,"Verde/EV":40},
+            "MPV":          {"Espaço/família":88,"Fiabilidade":75,"Custo operacional":65,"Segurança":60,"Marca":42,"Verde/EV":25},
+        }
+        md = motiv_data.get(demo_segment, motiv_data["All segments"])
+        motiv = pd.DataFrame({"Motivação": list(md.keys()), "Score": list(md.values())}).sort_values("Score")
         fig = go.Figure(go.Bar(
-            x=motiv["Score"], y=motiv["Motivation"], orientation="h",
-            marker_color=BLUE,
+            x=motiv["Score"], y=motiv["Motivação"], orientation="h",
+            marker_color=[CORAL if v == max(md.values()) else BLUE for v in motiv["Score"]],
             text=motiv["Score"].apply(lambda x: f"{x}%"),
             textposition="outside", textfont=dict(size=10)))
-        fig.update_layout(height=220, margin=dict(l=0,r=40,t=10,b=10),
-            xaxis=dict(range=[0,100],gridcolor=LGRAY),
+        fig.update_layout(height=220, margin=dict(l=0,r=50,t=10,b=10),
+            xaxis=dict(range=[0,110],gridcolor=LGRAY),
             paper_bgcolor="rgba(0,0,0,0)", plot_bgcolor="rgba(0,0,0,0)", font=dict(size=11))
         st.plotly_chart(fig, use_container_width=True)
 
