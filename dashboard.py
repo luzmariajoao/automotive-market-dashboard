@@ -302,17 +302,17 @@ top_brand = D["b25"].iloc[0] if year == 2025 else D["b24"].iloc[0]
 bev = D["fuel"][D["fuel"]["year"] == year]["bev_pct"].values[0] if year in D["fuel"]["year"].values else (17.4 if year == 2025 else 13.6)
 
 k1, k2, k3, k4, k5 = st.columns(5)
-with k1: st.markdown(kpi(f"Total sales {year}", f"{total/1e6:.2f}M", f"{delta_total:.1f}% YoY", delta_total>0), unsafe_allow_html=True)
-with k2: st.markdown(kpi("Largest market", top_country["country"], f"{top_country[sales_col]/1e6:.2f}M units", True), unsafe_allow_html=True)
-with k3: st.markdown(kpi("Top brand", top_brand["brand"], f"{top_brand[f'sales_{year}']/1e6:.2f}M units", True), unsafe_allow_html=True)
-with k4: st.markdown(kpi("BEV share EU", f"{bev}%", "of all new cars", bev > 13), unsafe_allow_html=True)
+with k1: st.markdown(kpi(f"Total registrations {year}", f"{total/1e6:.2f}M", f"{delta_total:.1f}% vs {year-1}", delta_total>0), unsafe_allow_html=True)
+with k2: st.markdown(kpi(f"Largest market {year}", top_country["country"], f"{top_country[sales_col]/1e6:.2f}M units", True), unsafe_allow_html=True)
+with k3: st.markdown(kpi(f"Top brand {year}", top_brand["brand"], f"{top_brand[f'sales_{year}']/1e6:.2f}M units", True), unsafe_allow_html=True)
+with k4: st.markdown(kpi(f"BEV share EU {year}", f"{bev}%", f"of all new cars {year}", bev > 13), unsafe_allow_html=True)
 with k5:
   pt = df[df["country"]=="Portugal"]
   if len(pt):
     pv = pt[sales_col].values[0]
-    st.markdown(kpi("Portugal", f"{pv/1e3:.0f}K", f"{pt['pct_change'].values[0]:+.1f}% YoY" if "pct_change" in pt.columns else "+7.3% YoY", True), unsafe_allow_html=True)
+    st.markdown(kpi(f"Portugal {year}", f"{pv/1e3:.0f}K", f"{pt['pct_change'].values[0]:+.1f}% YoY" if "pct_change" in pt.columns else f"+7.3% vs {year-1}", True), unsafe_allow_html=True)
   else:
-    st.markdown(kpi("Markets selected", f"{len(selected_countries)}", f"of 31 total", True), unsafe_allow_html=True)
+    st.markdown(kpi(f"Markets selected {year}", f"{len(selected_countries)}", f"of 31 total", True), unsafe_allow_html=True)
 
 st.divider()
 
@@ -582,8 +582,8 @@ with tabs[3]:
       brand_models = _get_models_for_brand(selected_brand)
       if len(brand_models):
         st.dataframe(
-          brand_models[["rank","model","fuel_type","notes"]].rename(
-            columns={"rank":"#","model":"Model","fuel_type":"Fuel","notes":"Notes"}
+          brand_models[["model","fuel_type","eu_registrations_est","yoy_change"]].rename(
+            columns={"model":"Model","fuel_type":"Fuel","eu_registrations_est":"EU Reg. (est.)","yoy_change":"YoY"}
           ),
           hide_index=True, use_container_width=True
         )
