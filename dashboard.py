@@ -217,9 +217,24 @@ def get_data():
     "grp24": load_manufacturer_groups(2024),
     "grp25": load_manufacturer_groups(2025),
     "ratio": load_ratio_per_capita(),
+        "monthly": load_monthly_data(),
+        "forecast": load_forecast_2026(),
+        "hhi": load_market_concentration(),
+        "grp_evo": load_group_share_evolution(),
+        "risk_matrix": load_country_risk_matrix(),
+        "outliers": load_outlier_analysis(),
   }
 
 D = get_data()
+
+
+def data_badge(year, note=""):
+    colors = {2025: ("#1D9E75","#EAF3DE"), 2024: ("#BA7517","#FAEEDA"), "mixed": ("#185FA5","#E6F1FB")}
+    c, bg = colors.get(year, colors["mixed"])
+    label = f"Data: {year}" if isinstance(year, int) else f"Data: {year}"
+    n = f" · {note}" if note else ""
+    return f'''<div style="display:inline-block;background:{bg};border:1px solid {c};border-radius:4px;
+padding:3px 10px;font-size:11px;font-weight:600;color:{c};margin-bottom:12px">{label}{n}</div>'''
 
 def kpi(label, value, delta, up, ctx=""):
   dc = "kpi-up" if up else "kpi-dn"
@@ -327,6 +342,9 @@ tabs = st.tabs([
   "🏭 Production",
   "👥 Demographics",
   "📋 Executive Summary",
+  "📈 Monthly Trend & Forecast",
+  "🔬 Strategic Analytics",
+  "📚 Data Coverage",
 ])
 
 # ── TAB 1: MAP ────────────────────────────────────────────────────────────────
@@ -489,9 +507,9 @@ with tabs[2]:
   yoy = D["yoy"][D["yoy"]["country"].isin(selected_countries)].dropna(subset=["pct_change"]).copy()
   yoy = yoy.sort_values("pct_change")
 
-  highlight = st.multiselect("Highlight countries", sorted(yoy["country"].tolist()),
-                default=["Portugal","Spain","Germany"])
-
+  _avail_yoy = sorted(yoy["country"].tolist())
+  _def_yoy = [c for c in ["Portugal","Spain","Germany"] if c in _avail_yoy]
+  highlight = st.multiselect("Highlight countries", _avail_yoy, default=_def_yoy)
   def bar_color(row):
     if row["country"] in highlight:
       return CORAL if row["pct_change"] < 0 else AMBER
@@ -523,9 +541,9 @@ with tabs[3]:
   st.markdown('<div class="section-hd">Brand Drill-down</div>', unsafe_allow_html=True)
 
   all_brands = D["b25"]["brand"].tolist()
-  selected_brand = st.selectbox("Select brand", all_brands,
-    index=all_brands.index(st.session_state.selected_brand)
-    if st.session_state.selected_brand in all_brands else 0)
+  _brand_idx = all_brands.index(st.session_state.selected_brand) if st.session_state.selected_brand in all_brands else 0
+  selected_brand = st.selectbox("Select brand", all_brands, index=_brand_idx)
+
   st.session_state.selected_brand = selected_brand
 
   b25_row = D["b25"][D["b25"]["brand"] == selected_brand].iloc[0] if len(D["b25"][D["b25"]["brand"] == selected_brand]) else None
@@ -607,13 +625,12 @@ with tabs[4]:
   all_c = sorted(D["c25"]["country"].tolist())
   col_sel1, col_sel2 = st.columns(2)
   with col_sel1:
-    ca = st.selectbox("Country A", all_c,
-      index=all_c.index(st.session_state.compare_a) if st.session_state.compare_a in all_c else 0)
+    _ca = st.session_state.compare_a if st.session_state.compare_a in all_c else all_c[0]
+    ca = st.selectbox("Country A", all_c, index=all_c.index(_ca))
     st.session_state.compare_a = ca
   with col_sel2:
-    cb_default = st.session_state.compare_b if st.session_state.compare_b in all_c else all_c[1]
-    cb = st.selectbox("Country B", all_c,
-      index=all_c.index(cb_default))
+    _cb = st.session_state.compare_b if st.session_state.compare_b in all_c else (all_c[1] if len(all_c) > 1 else all_c[0])
+    cb = st.selectbox("Country B", all_c, index=all_c.index(_cb))
     st.session_state.compare_b = cb
 
   def get_country_row(country):
@@ -913,5 +930,483 @@ with tabs[8]:
   with r2: st.warning("**EV transition**\nBEV stall vs regulatory targets. Assess OEM partners' compliance trajectories urgently.")
   with r3: st.error("**Chinese brands**\nSet up systematic tracking of BYD and MG penetration. Early warning system needed.")
 
+
+# ── TAB 10: MONTHLY TREND & FORECAST ─────────────────────────────────────────
+with tabs[9]:
+    st.markdown('<div class="section-hd">Monthly Trend & 2026 Forecast</div>', unsafe_allow_html=True)
+    st.markdown(data_badge('mixed', 'EU27 monthly data reconstructed from ACEA YTD reports · Annual totals confirmed · Forecast = analyst estimates'), unsafe_allow_html=True)
+
+    monthly = D["monthly"]
+    forecast = D["forecast"]
+
+    col_toggle1, col_toggle2 = st.columns(2)
+    with col_toggle1:
+        show_metric = st.radio("Metric", ["Total registrations (K)", "BEV market share (%)"], horizontal=True)
+    with col_toggle2:
+        show_forecast = st.checkbox("Show 2026 forecast", value=True)
+
+    st.markdown("<br>", unsafe_allow_html=True)
+
+    if show_metric == "Total registrations (K)":
+        col_a, col_b = st.columns([1.6, 1])
+        with col_a:
+            st.markdown("##### Monthly EU registrations — 2024 vs 2025 (EU27, thousands)")
+            fig = go.Figure()
+            fig.add_trace(go.Scatter(
+                x=monthly["month"], y=monthly["reg_2024_k"],
+                name="2024", mode="lines+markers",
+                line=dict(color="#B5D4F4", width=2, dash="dot"),
+                marker=dict(size=6),
+            ))
+            fig.add_trace(go.Scatter(
+                x=monthly["month"], y=monthly["reg_2025_k"],
+                name="2025", mode="lines+markers",
+                line=dict(color=BLUE, width=2.5),
+                marker=dict(size=7),
+                fill="tonexty", fillcolor="rgba(24,95,165,0.05)",
+            ))
+            # Annotate key events
+            fig.add_annotation(x="Sep", y=1120, text="Plate change<br>+2.3%", showarrow=True,
+                arrowhead=2, font=dict(size=9, color=TEAL), ax=30, ay=-30)
+            fig.add_annotation(x="Nov", y=858, text="BEV surge<br>+44%", showarrow=True,
+                arrowhead=2, font=dict(size=9, color=TEAL), ax=-40, ay=-30)
+            fig.add_annotation(x="Jan", y=740, text="Soft start<br>-2.6%", showarrow=True,
+                arrowhead=2, font=dict(size=9, color=CORAL), ax=30, ay=30)
+            fig.update_layout(
+                height=350, margin=dict(l=0,r=0,t=20,b=30),
+                legend=dict(orientation="h", y=-0.15),
+                yaxis=dict(title="Thousands", gridcolor=LGRAY),
+                paper_bgcolor="rgba(0,0,0,0)", plot_bgcolor="rgba(0,0,0,0)",
+                font=dict(size=11),
+            )
+            st.plotly_chart(fig, use_container_width=True)
+            st.markdown('<div class="data-note">Source: ACEA press releases 2024-2025 · EU27 only · Monthly splits estimated from YTD figures · Annual totals confirmed</div>', unsafe_allow_html=True)
+
+        with col_b:
+            st.markdown("##### Key observations")
+            insight("H1 2025 was weak (-1.9% YTD) but H2 recovered strongly. September plate change (+2.3%) and November BEV surge (+44%) drove the full-year turnaround to +1.8%.")
+            insight("August remains the structural low point — summer holidays suppress EU registrations to 40-50% of a typical month. No structural change expected in 2026.")
+            warning("January 2025 started -2.6% — weakness in Germany (-15%) and France (-8%) was only partially offset by Spain and Poland. Watch Q1 2026 closely.")
+
+    else:
+        col_a, col_b = st.columns([1.6, 1])
+        with col_a:
+            st.markdown("##### BEV market share — Monthly EU 2024 vs 2025 (%)")
+            fig = go.Figure()
+            fig.add_trace(go.Scatter(
+                x=monthly["month"], y=monthly["bev_pct_2024"],
+                name="2024", mode="lines+markers",
+                line=dict(color="#B5D4F4", width=2, dash="dot"),
+                marker=dict(size=6),
+            ))
+            fig.add_trace(go.Scatter(
+                x=monthly["month"], y=monthly["bev_pct_2025"],
+                name="2025", mode="lines+markers",
+                line=dict(color=BLUE, width=2.5),
+                marker=dict(size=7),
+            ))
+            if show_forecast:
+                # Q1 2026 known data point
+                fig.add_trace(go.Scatter(
+                    x=["Dec", "Q1 2026"], y=[25.0, 20.6],
+                    name="Q1 2026 (confirmed)", mode="markers+lines",
+                    line=dict(color=TEAL, width=2, dash="dash"),
+                    marker=dict(size=9, symbol="star"),
+                ))
+            fig.add_hline(y=17.4, line_dash="dash", line_color=GRAY, line_width=1,
+                annotation_text="2025 avg 17.4%", annotation_font=dict(size=9))
+            fig.add_hline(y=13.6, line_dash="dot", line_color="#cccccc", line_width=1,
+                annotation_text="2024 avg 13.6%", annotation_font=dict(size=9))
+            fig.update_layout(
+                height=350, margin=dict(l=0,r=0,t=20,b=30),
+                legend=dict(orientation="h", y=-0.15),
+                yaxis=dict(title="BEV share (%)", ticksuffix="%", gridcolor=LGRAY),
+                paper_bgcolor="rgba(0,0,0,0)", plot_bgcolor="rgba(0,0,0,0)",
+                font=dict(size=11),
+            )
+            st.plotly_chart(fig, use_container_width=True)
+            st.markdown('<div class="data-note">2025 monthly estimated from ACEA YTD · Q1 2026 confirmed (ACEA, March 2026) · Source: ACEA 2024-2026</div>', unsafe_allow_html=True)
+
+        with col_b:
+            st.markdown("##### BEV trajectory reading")
+            insight("2025 reversed the 2024 decline. Starting at 15% in January and accelerating to 25% in December — the year-end surge is driven by OEM compliance pushes ahead of EU CO₂ targets.")
+            risk("December spikes are structurally artificial — OEMs register EVs en masse at year-end to hit fleet averages. The 'real' underlying consumer BEV demand is closer to the H1 average of 15.6%.")
+            insight(f"Q1 2026 confirmed at 20.6% — a record for a first quarter. This suggests the underlying trend has genuinely shifted upward, not just year-end effects.")
+
+    st.divider()
+
+    # 2026 Forecast
+    st.markdown("##### 2026 Full Year Forecast — EU car market")
+    st.markdown(data_badge("mixed", "Analyst estimates based on ACEA trend data · Not investment advice"), unsafe_allow_html=True)
+
+    fc1, fc2, fc3 = st.columns(3)
+    for col, (_, row) in zip([fc1, fc2, fc3], forecast.iterrows()):
+        with col:
+            color = row["color"]
+            growth = row["growth_vs_2025"]
+            st.markdown(f"""
+<div style="background:#f9f9f9;border-radius:8px;padding:16px;border-left:4px solid {color};border:0.5px solid #e0e0e0">
+<div style="font-size:12px;color:#888;font-weight:600;text-transform:uppercase">{row["scenario"]}</div>
+<div style="font-size:24px;font-weight:700;color:#0d1b2a;margin-top:4px">{row["reg_2026_k_eu"]/1000:.2f}M</div>
+<div style="font-size:12px;color:{color};margin-top:2px">{'▲' if growth>0 else '▼'} {growth:+.1f}% vs 2025 · BEV {row["bev_share_2026"]:.1f}%</div>
+</div>""", unsafe_allow_html=True)
+
+    st.markdown("<br>", unsafe_allow_html=True)
+
+    # Waterfall assumptions
+    with st.expander("📋 Forecast assumptions"):
+        st.markdown("""
+**Base case (+2.5% EU, ~13.3M EU+EFTA+UK)**
+- Spain and Poland sustain above-average growth
+- Germany stabilises after 2024-2025 weakness
+- BEV share reaches ~21.5% driven by CO₂ compliance pressure
+- No major macro shock or new tariff escalation
+
+**Optimistic (+5%, ~13.8M)**
+- EU EV incentive expansion (several countries discussing)
+- Strong H2 driven by new model launches (VW ID.2, Renault 5, Leapmotor C10)
+- Iberian growth extends to Italy recovery
+
+**Pessimistic (flat, ~12.9M)**
+- US tariff escalation hits EU auto exports, production cuts
+- Consumer confidence deteriorates (high rates, energy costs)
+- German market fails to recover from structural shift
+- BEV share stagnates if incentives not renewed
+        """)
+
+    st.markdown('<div class="data-note">Forecast EU27 only · EU+EFTA+UK adds ~11% · Source: analyst estimates based on ACEA / S&P Global Mobility trend data</div>', unsafe_allow_html=True)
+
+
 st.divider()
 st.caption("European Car Market Intelligence Report · Maria João Luz · mariajoaoluz.com · Data: ACEA, JATO Dynamics, S&P Global Mobility, ICCT, EEA · 2024–2025")
+
+# ── TAB 11: STRATEGIC ANALYTICS ───────────────────────────────────────────────
+with tabs[10]:
+    st.markdown('<div class="section-hd">Strategic Analytics</div>', unsafe_allow_html=True)
+
+    analytics_section = st.radio("", [
+        "Market Concentration (HHI)",
+        "Group Share Evolution",
+        "Risk / Opportunity Matrix",
+        "Outlier Analysis",
+        "Correlation Explorer",
+    ], horizontal=True, label_visibility="collapsed")
+
+    st.markdown("<br>", unsafe_allow_html=True)
+
+    # ── HHI ──────────────────────────────────────────────────────────────────
+    if analytics_section == "Market Concentration (HHI)":
+        st.markdown("#### Herfindahl-Hirschman Index — European Car Market")
+        hhi = D["hhi"]
+        col_exp, col_m = st.columns([1, 1.5])
+
+        with col_exp:
+            st.markdown("""
+**What is HHI?**
+The Herfindahl-Hirschman Index measures market concentration.
+It is the sum of squared market shares of all players.
+
+| HHI Range | Interpretation |
+|---|---|
+| < 1,000 | Unconcentrated (competitive) |
+| 1,000–1,800 | Moderately concentrated |
+| > 1,800 | Highly concentrated |
+
+The EU car market HHI is well below 1,000 — structurally competitive.
+A declining HHI signals increasing competition (new entrants, fragmentation).
+""")
+            insight(f"Brand HHI fell from {hhi['brand_hhi_2024']} in 2024 to {hhi['brand_hhi_2025']} in 2025 — competition is intensifying. Chinese brands (BYD +270%) and Cupra (+35.6%) are fragmenting share away from incumbents.")
+
+        with col_m:
+            metrics_data = {
+                "Metric": ["Brand HHI 2024", "Brand HHI 2025", "Group HHI 2024", "Group HHI 2025",
+                           "Top 3 brand share 2024", "Top 3 brand share 2025",
+                           "Top 5 brand share 2024", "Top 5 brand share 2025"],
+                "Value": [f"{hhi['brand_hhi_2024']:.0f}", f"{hhi['brand_hhi_2025']:.0f}",
+                         f"{hhi['group_hhi_2024']:.0f}", f"{hhi['group_hhi_2025']:.0f}",
+                         f"{hhi['top3_share_2024']:.1f}%", f"{hhi['top3_share_2025']:.1f}%",
+                         f"{hhi['top5_share_2024']:.1f}%", f"{hhi['top5_share_2025']:.1f}%"],
+                "Signal": ["—", "▼ More competitive", "—", "▲ Group consolidation",
+                          "—", "▼ Fragmentation", "—", "▼ Fragmentation"],
+            }
+            st.dataframe(pd.DataFrame(metrics_data), hide_index=True, use_container_width=True)
+
+            # Visual HHI gauge
+            fig_hhi = go.Figure(go.Indicator(
+                mode="gauge+number+delta",
+                value=hhi["brand_hhi_2025"],
+                delta={"reference": hhi["brand_hhi_2024"], "valueformat": ".0f"},
+                title={"text": "Brand HHI 2025"},
+                gauge={
+                    "axis": {"range": [0, 2000]},
+                    "bar": {"color": BLUE},
+                    "steps": [
+                        {"range": [0, 1000], "color": "#EAF3DE"},
+                        {"range": [1000, 1800], "color": "#FAEEDA"},
+                        {"range": [1800, 2000], "color": "#FCEBEB"},
+                    ],
+                    "threshold": {"line": {"color": CORAL, "width": 2}, "value": 1000},
+                },
+            ))
+            fig_hhi.update_layout(height=220, margin=dict(l=20,r=20,t=40,b=0),
+                paper_bgcolor="rgba(0,0,0,0)")
+            st.plotly_chart(fig_hhi, use_container_width=True)
+
+    # ── GROUP SHARE EVOLUTION ─────────────────────────────────────────────────
+    elif analytics_section == "Group Share Evolution":
+        st.markdown("#### Manufacturer Group Market Share — Europe 2019→2025")
+        grp_evo = D["grp_evo"]
+        groups_sel = st.multiselect("Select groups",
+            grp_evo["group"].unique().tolist(),
+            default=["Volkswagen Group","Stellantis","Renault Group","Toyota Group","Tesla"])
+
+        filtered = grp_evo[grp_evo["group"].isin(groups_sel)]
+        col_chart, col_ins = st.columns([1.5, 1])
+
+        with col_chart:
+            fig_evo = go.Figure()
+            group_colors = {
+                "Volkswagen Group": BLUE, "Stellantis": CORAL, "Renault Group": TEAL,
+                "Toyota Group": AMBER, "Tesla": "#534AB7", "BMW Group": "#993556",
+                "Hyundai Group": "#3B6D11", "Mercedes-Benz": "#854F0B",
+            }
+            for grp in groups_sel:
+                gdf = filtered[filtered["group"] == grp]
+                fig_evo.add_trace(go.Scatter(
+                    x=gdf["year"], y=gdf["market_share"],
+                    name=grp, mode="lines+markers",
+                    line=dict(color=group_colors.get(grp, GRAY), width=2.5),
+                    marker=dict(size=7),
+                ))
+            fig_evo.add_vline(x=2020, line_dash="dot", line_color=GRAY,
+                annotation_text="COVID", annotation_font=dict(size=9))
+            fig_evo.add_vline(x=2021, line_dash="dot", line_color=AMBER,
+                annotation_text="Stellantis\nmerger", annotation_font=dict(size=9))
+            fig_evo.update_layout(
+                height=380, margin=dict(l=0,r=0,t=20,b=30),
+                yaxis=dict(title="Market share (%)", ticksuffix="%", gridcolor=LGRAY),
+                xaxis=dict(tickvals=list(range(2019,2026))),
+                legend=dict(orientation="h", y=-0.2),
+                paper_bgcolor="rgba(0,0,0,0)", plot_bgcolor="rgba(0,0,0,0)",
+                font=dict(size=11),
+            )
+            st.plotly_chart(fig_evo, use_container_width=True)
+            st.markdown('<div class="data-note">2019-2022 estimates · 2023-2025 ACEA confirmed · Stellantis created Jan 2021 (FCA + PSA merger)</div>', unsafe_allow_html=True)
+
+        with col_ins:
+            insight("VW Group has grown from 24.1% to 26.9% over 6 years — systematic market share gain through volume (Skoda +9.6%, Cupra +35.6%) while maintaining premium margin in Audi/Porsche.")
+            risk("Stellantis lost 5 percentage points since its 2021 creation — from 19.4% to 14.3%. This is one of the largest share losses by any major group in modern European automotive history.")
+            insight("Tesla peaked at 2.5% in 2024 and fell to 1.8% in 2025. Traditional OEMs recovered BEV ground. This reversal was faster than most analysts predicted.")
+            warning("Toyota's rise from 5.2% to 7.6% (2019-2024) was the strongest gain of any major group — driven entirely by hybrid dominance as competitors struggled with pure BEV transition.")
+
+    # ── RISK / OPPORTUNITY MATRIX ─────────────────────────────────────────────
+    elif analytics_section == "Risk / Opportunity Matrix":
+        st.markdown("#### Market Risk / Opportunity Matrix — 2025")
+        st.markdown("**X axis:** YoY market growth · **Y axis:** BEV readiness · **Size:** market volume")
+        rm = D["risk_matrix"]
+
+        col_q, col_chart2 = st.columns([1, 2])
+        with col_q:
+            st.markdown("""
+**Quadrant logic:**
+| | Low BEV | High BEV |
+|---|---|---|
+| **High growth** | 🚀 Growth Markets | ⭐ Stars |
+| **Low/neg growth** | ⚠️ Watch | 🔋 EV Leaders |
+
+EU averages used as thresholds:
+- Growth: +2.4% YoY
+- BEV: 13.6% market share
+""")
+            for q, color in [("⭐ Stars",TEAL),("🚀 Growth Markets",BLUE),("🔋 EV Leaders",AMBER),("⚠️ Watch",CORAL)]:
+                qdf = rm[rm["quadrant"]==q]
+                st.markdown(f'<div style="color:{color};font-weight:600;font-size:12px">{q} ({len(qdf)})</div>', unsafe_allow_html=True)
+                st.markdown(", ".join(qdf["country"].tolist()))
+                st.markdown("")
+
+        with col_chart2:
+            q_colors = {"⭐ Stars": TEAL, "🚀 Growth Markets": BLUE,
+                       "🔋 EV Leaders": AMBER, "⚠️ Watch": CORAL}
+            fig_rm = go.Figure()
+            for q in rm["quadrant"].unique():
+                qdf = rm[rm["quadrant"]==q]
+                fig_rm.add_trace(go.Scatter(
+                    x=qdf["yoy_2025"], y=qdf["bev_share"],
+                    mode="markers+text",
+                    name=q,
+                    marker=dict(
+                        size=[max(12, min(50, v/30)) for v in qdf["market_size_k"]],
+                        color=q_colors[q], opacity=0.8, line=dict(width=1, color="white")
+                    ),
+                    text=qdf["country"],
+                    textposition="top center",
+                    textfont=dict(size=9),
+                    customdata=qdf[["market_size_k","reg_per_1000"]].values,
+                    hovertemplate="<b>%{text}</b><br>YoY: %{x:+.1f}%<br>BEV share: %{y:.1f}%<br>Market: %{customdata[0]:.0f}K units<extra></extra>",
+                ))
+            # Quadrant lines
+            fig_rm.add_vline(x=2.4, line_dash="dash", line_color=GRAY, line_width=1,
+                annotation_text="EU avg growth +2.4%", annotation_font=dict(size=9))
+            fig_rm.add_hline(y=13.6, line_dash="dash", line_color=GRAY, line_width=1,
+                annotation_text="EU avg BEV 13.6%", annotation_font=dict(size=9))
+            fig_rm.update_layout(
+                height=440, margin=dict(l=0,r=0,t=20,b=30),
+                xaxis=dict(title="YoY Growth 2025 (%)", gridcolor=LGRAY, zeroline=True),
+                yaxis=dict(title="BEV Market Share (%)", gridcolor=LGRAY),
+                legend=dict(orientation="h", y=-0.15),
+                paper_bgcolor="rgba(0,0,0,0)", plot_bgcolor="rgba(0,0,0,0)",
+                font=dict(size=11),
+            )
+            st.plotly_chart(fig_rm, use_container_width=True)
+            st.markdown('<div class="data-note">Bubble size = market volume (units) · Source: ACEA 2025 / ICCT 2024</div>', unsafe_allow_html=True)
+
+    # ── OUTLIER ANALYSIS ─────────────────────────────────────────────────────
+    elif analytics_section == "Outlier Analysis":
+        st.markdown("#### Outlier Markets — Structural Explanations")
+        st.markdown("*These are the markets where the number alone is not the insight — the mechanism is.*")
+        outliers = D["outliers"]
+        for _, row in outliers.iterrows():
+            color = TEAL if row["yoy_2025"] > 0 else CORAL
+            direction = "▲" if row["yoy_2025"] > 0 else "▼"
+            with st.expander(f"{direction} **{row['country']}** · {row['yoy_2025']:+.1f}% · {row['headline']}", expanded=True):
+                c1, c2 = st.columns(2)
+                with c1:
+                    st.markdown("**Mechanism**")
+                    st.markdown(row["mechanism"])
+                with c2:
+                    st.markdown("**Strategic implication**")
+                    st.info(row["strategic_implication"])
+
+    # ── CORRELATION EXPLORER ──────────────────────────────────────────────────
+    elif analytics_section == "Correlation Explorer":
+        st.markdown("#### Correlation Explorer — What drives BEV adoption?")
+        rm = D["risk_matrix"]
+
+        col_x, col_y = st.columns(2)
+        with col_x:
+            x_var = st.selectbox("X axis", ["reg_per_1000","yoy_2025","market_size_k"], index=0,
+                format_func=lambda x: {"reg_per_1000":"Registrations per 1,000 people",
+                    "yoy_2025":"YoY market growth (%)","market_size_k":"Market size (K units)"}[x])
+        with col_y:
+            y_var = st.selectbox("Y axis", ["bev_share","yoy_2025","reg_per_1000"], index=0,
+                format_func=lambda x: {"bev_share":"BEV share (%)","yoy_2025":"YoY growth (%)",
+                    "reg_per_1000":"Reg. per 1,000 people"}[x])
+
+        import numpy as np
+        x_data = rm[x_var].values
+        y_data = rm[y_var].values
+        corr = np.corrcoef(x_data, y_data)[0,1]
+
+        # Trend line
+        z = np.polyfit(x_data, y_data, 1)
+        p = np.poly1d(z)
+        x_line = np.linspace(x_data.min(), x_data.max(), 50)
+
+        fig_corr = go.Figure()
+        fig_corr.add_trace(go.Scatter(
+            x=x_data, y=y_data, mode="markers+text",
+            text=rm["country"], textposition="top center", textfont=dict(size=8),
+            marker=dict(
+                size=[max(8, min(25, v/40)) for v in rm["market_size_k"]],
+                color=[{"⭐ Stars":TEAL,"🚀 Growth Markets":BLUE,
+                       "🔋 EV Leaders":AMBER,"⚠️ Watch":CORAL}[q] for q in rm["quadrant"]],
+                opacity=0.8),
+            customdata=rm[["quadrant","market_size_k"]].values,
+            hovertemplate="<b>%{text}</b><br>%{x:.1f} / %{y:.1f}<br>%{customdata[0]}<extra></extra>",
+        ))
+        fig_corr.add_trace(go.Scatter(
+            x=x_line, y=p(x_line), mode="lines",
+            line=dict(color=GRAY, width=1.5, dash="dash"),
+            name=f"Trend (r={corr:.2f})", showlegend=True,
+        ))
+        labels = {"bev_share":"BEV share (%)","yoy_2025":"YoY growth (%)",
+                 "reg_per_1000":"Reg./1,000 people","market_size_k":"Market size (K)"}
+        fig_corr.update_layout(
+            height=420, margin=dict(l=0,r=0,t=30,b=30),
+            xaxis=dict(title=labels.get(x_var,""), gridcolor=LGRAY),
+            yaxis=dict(title=labels.get(y_var,""), gridcolor=LGRAY),
+            legend=dict(orientation="h", y=-0.15),
+            paper_bgcolor="rgba(0,0,0,0)", plot_bgcolor="rgba(0,0,0,0)",
+            font=dict(size=11),
+            title=f"Pearson correlation: r = {corr:.2f} ({'strong' if abs(corr)>0.6 else 'moderate' if abs(corr)>0.3 else 'weak'})"
+        )
+        st.plotly_chart(fig_corr, use_container_width=True)
+
+        corr_strength = "strong positive" if corr > 0.6 else "moderate positive" if corr > 0.3 else "strong negative" if corr < -0.6 else "moderate negative" if corr < -0.3 else "weak"
+        insight(f"Pearson r = {corr:.2f} — {corr_strength} correlation. "
+               f"{'Wealthier, denser markets tend to have higher EV penetration — infrastructure investment and price sensitivity are the structural drivers.' if x_var=='reg_per_1000' and y_var=='bev_share' else 'Adjust the axes to explore different relationships in the data.'}")
+
+# ── TAB 12: DATA COVERAGE ─────────────────────────────────────────────────────
+with tabs[11]:
+    st.markdown('<div class="section-hd">Data Coverage & Methodology</div>', unsafe_allow_html=True)
+
+    st.markdown("""
+### What this dashboard is — and what it isn't
+
+This dashboard is built on **publicly available industry data** from primary sources.
+All figures represent **new passenger car registrations** (units sold/registered in a given period),
+not vehicle fleet size, not revenue, and not used car sales.
+""")
+
+    st.markdown("### Data sources & coverage")
+    sources_df = pd.DataFrame([
+        ("ACEA", "European Automobile Manufacturers' Assoc.", "Sales by country, fuel type, manufacturer group", "2024–2025 (monthly)", "Confirmed", "acea.auto"),
+        ("JATO Dynamics", "Global automotive intelligence", "Top 10 models by volume", "2024 (full year)", "Confirmed", "jato.com"),
+        ("best-selling-cars.com", "Auto market aggregator", "30-brand ranking, top models 2025", "2025 (full year)", "Confirmed", "best-selling-cars.com"),
+        ("ICCT / EEA", "Intl. Council on Clean Transportation", "CO₂ g/km by country, BEV share by country", "2024 (latest)", "Confirmed", "theicct.org"),
+        ("S&P Global Mobility / Polk", "Enterprise automotive data", "Production by country, demographic profiles", "2024", "Confirmed (partial)", "spglobal.com/mobility"),
+        ("Eurostat / UN", "Official statistics", "Population by country", "2024 estimate", "Confirmed", "ec.europa.eu/eurostat"),
+        ("ACEA (YTD reports)", "Monthly press releases", "Monthly EU27 registration volumes", "Jan–Dec 2025", "Reconstructed from YTD", "acea.auto"),
+        ("Analyst estimates", "Based on ACEA trend data", "2026 full year forecast, group share 2019-2022", "2026 projection", "Estimates", "—"),
+        ("S&P Global Mobility Polk", "Enterprise licence required", "Buyer demographics (age, gender, motivation)", "—", "Illustrative only", "spglobal.com/mobility"),
+    ], columns=["Source","Full name","Covers","Period","Status","URL"])
+
+    status_colors = {"Confirmed": "🟢", "Reconstructed from YTD": "🟡",
+                    "Confirmed (partial)": "🟡", "Estimates": "🟠", "Illustrative only": "🔴"}
+    sources_df["Status"] = sources_df["Status"].map(lambda x: f"{status_colors.get(x,'⚪')} {x}")
+    st.dataframe(sources_df[["Source","Covers","Period","Status"]], hide_index=True, use_container_width=True, height=320)
+
+    st.markdown("### Data dictionary")
+    dict_df = pd.DataFrame([
+        ("New car registrations", "Number of new passenger cars registered in a country in a given period. Includes both private and fleet/company cars. Source: national auto associations via ACEA."),
+        ("BEV share", "Battery Electric Vehicles as % of total new passenger car registrations. ACEA definition excludes mild hybrids. Note: some sources include mild hybrids — always check definition."),
+        ("YoY change (%)", "Year-over-year percentage change: (current period - prior period) / prior period × 100."),
+        ("CO₂ g/km", "Average CO₂ emissions per km of new cars registered in a country. EU 2025 target: 93.6 g/km fleet average for OEMs."),
+        ("Reg. per 1,000 people", "New car registrations ÷ (population in millions × 1,000). Normalises market size for population comparison. Uses 2024 population estimates."),
+        ("HHI (brand)", "Sum of squared market shares of all brands. Ranges 0–10,000. Below 1,000 = competitive market. Calculated on top 30 brands + residual."),
+        ("EU average (growth)", "+2.4% — EU+EFTA+UK full year 2025 vs 2024 (ACEA confirmed)."),
+        ("EU average (BEV share)", "13.6% for 2024, 17.4% for 2025 — EU27 only (ACEA confirmed annual figures)."),
+        ("Market scope", "EU27 + EFTA (Norway, Iceland, Switzerland) + UK = 31 markets. Some metrics (BEV, CO₂, fuel mix) are EU27 only as ACEA reports separately."),
+    ], columns=["Term", "Definition"])
+    st.dataframe(dict_df, hide_index=True, use_container_width=True, height=360)
+
+    st.markdown("### Limitations")
+    col_l1, col_l2 = st.columns(2)
+    with col_l1:
+        st.warning("""
+**Known data gaps**
+- Monthly registrations 2025: annual totals confirmed, monthly splits reconstructed
+- Group share 2019-2022: estimates based on published brand data
+- Brand model volumes: EU estimates, not officially published
+- Demographics: illustrative only (S&P Polk licence required for real data)
+""")
+    with col_l2:
+        st.info("""
+**Methodology notes**
+- All monetary figures: none — this dashboard is units only
+- Brand ranking: EU+EFTA+UK scope unless stated
+- BEV metrics: EU27 only (ACEA reporting scope)
+- Forecasts: scenario analysis, not econometric modelling
+- Last data update: ACEA full year 2025 (January 2026)
+""")
+
+    st.markdown("### Update cadence")
+    st.markdown("""
+| Data type | ACEA publishes | Dashboard update |
+|---|---|---|
+| Monthly totals by country | 3rd week of following month | Manual — monthly |
+| Full year by brand/model | January following year | Annual |
+| CO₂ / BEV annual | Q1 following year | Annual |
+| Forecasts | Ongoing | Quarterly review |
+""")
+    st.markdown('<div class="data-note">Dashboard built by Maria João Luz · mariajoaoluz.com · Powered by Streamlit + Plotly · Data: ACEA, JATO, S&P Global Mobility, ICCT, EEA</div>', unsafe_allow_html=True)
