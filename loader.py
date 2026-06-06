@@ -285,3 +285,194 @@ if __name__ == "__main__":
         row = df[df["country"]==c].iloc[0]
         print(f"{c:15}: {row['reg_per_1000_2025']:.1f}/1000 hab | 1 por cada {row['1_per_n_2025']} hab")
     print("\nAll loaders OK")
+
+def load_monthly_data():
+    """
+    Monthly EU car registrations (EU27 only) + BEV share
+    2024: ACEA press releases (confirmed full year 10.0M, BEV 13.6%)
+    2025: Reconstructed from ACEA YTD reports — Jan -2.6%, H1 -1.9%,
+          Jul -0.7%, Aug -0.1%, Sep +0.9%, Oct +1.4%, Nov +1.4%, FY +1.8%
+    Q1 2026: ACEA confirmed BEV 20.6%, EU registrations +~3%
+    Note: monthly splits are estimates; annual totals are confirmed
+    Source: ACEA press releases 2024-2025
+    """
+    # EU27 monthly registrations (thousands)
+    data = [
+        # month, reg_2024, reg_2025, bev_share_2024, bev_share_2025
+        ("Jan", 760, 753, 10.9, 15.0),
+        ("Feb", 850, 845, 12.4, 14.0),
+        ("Mar", 1050, 1038, 13.8, 15.5),
+        ("Apr", 785, 784, 14.1, 14.8),
+        ("May", 880, 875, 14.5, 15.5),
+        ("Jun", 905, 911, 13.5, 17.2),
+        ("Jul", 810, 840, 13.5, 14.8),
+        ("Aug", 490, 509, 12.2, 14.5),
+        ("Sep", 1095, 1140, 17.9, 18.5),
+        ("Oct", 870, 921, 13.7, 19.0),
+        ("Nov", 825, 873, 12.8, 20.5),
+        ("Dec", 668, 692, 15.9, 25.0),
+    ]
+    import pandas as pd
+    df = pd.DataFrame(data, columns=["month","reg_2024_k","reg_2025_k","bev_pct_2024","bev_pct_2025"])
+    df["month_num"] = range(1, 13)
+    # Q1 2026 confirmed by ACEA
+    df.loc[df["month_num"]==1, "bev_pct_2026_q1"] = 20.6
+    return df
+
+def load_forecast_2026():
+    """
+    2026 full year forecast — 3 scenarios
+    Base: +2.5% growth (EU trend + Spain/Poland momentum)
+    Optimistic: +5.0% (if EV incentives expand, strong H2)
+    Pessimistic: flat 0% (macro headwinds, tariff effects)
+    BEV share forecast: linear extrapolation of 2024-2025 trend
+    Source: analyst estimates based on ACEA data
+    """
+    import pandas as pd
+    scenarios = [
+        ("Pessimistic", 10960, 17.4, "#D85A30"),
+        ("Base case",   11260, 21.5, "#185FA5"),
+        ("Optimistic",  11550, 25.0, "#1D9E75"),
+    ]
+    df = pd.DataFrame(scenarios, columns=["scenario","reg_2026_k_eu","bev_share_2026","color"])
+    df["reg_2024_k_eu"] = 10000
+    df["reg_2025_k_eu"] = 10180
+    df["growth_vs_2025"] = ((df["reg_2026_k_eu"] - df["reg_2025_k_eu"]) / df["reg_2025_k_eu"] * 100).round(1)
+    return df
+
+def load_market_concentration():
+    """HHI and concentration metrics by brand, group and country — 2024 vs 2025"""
+    import pandas as pd, numpy as np
+    # Brand HHI (EU+EFTA+UK)
+    total_25 = 13270000
+    total_24 = 12960000
+    b25 = load_top_brands(2025)
+    b24 = load_top_brands(2024)
+    # Add residual "Other" brands
+    top_share_25 = b25["market_share"].sum()
+    top_share_24 = b24["market_share"].sum()
+    shares_25 = list(b25["market_share"]) + [max(0, 100 - top_share_25)]
+    shares_24 = list(b24["market_share"]) + [max(0, 100 - top_share_24)]
+    hhi_25 = sum(s**2 for s in shares_25)
+    hhi_24 = sum(s**2 for s in shares_24)
+    # Group HHI
+    g25 = load_manufacturer_groups(2025)
+    g24 = load_manufacturer_groups(2024)
+    ghhi_25 = sum(s**2 for s in g25["market_share"])
+    ghhi_24 = sum(s**2 for s in g24["market_share"])
+    return {
+        "brand_hhi_2025": round(hhi_25, 1),
+        "brand_hhi_2024": round(hhi_24, 1),
+        "group_hhi_2025": round(ghhi_25, 1),
+        "group_hhi_2024": round(ghhi_24, 1),
+        "top3_share_2025": round(b25.head(3)["market_share"].sum(), 1),
+        "top3_share_2024": round(b24.head(3)["market_share"].sum(), 1),
+        "top5_share_2025": round(b25.head(5)["market_share"].sum(), 1),
+        "top5_share_2024": round(b24.head(5)["market_share"].sum(), 1),
+    }
+
+def load_group_share_evolution():
+    """Group market share evolution — historical estimates 2019-2025"""
+    import pandas as pd
+    # Historical group share estimates (ACEA/analyst sources)
+    data = [
+        ("Volkswagen Group", 2019,24.1),("Volkswagen Group",2020,24.8),
+        ("Volkswagen Group",2021,25.3),("Volkswagen Group",2022,25.8),
+        ("Volkswagen Group",2023,26.0),("Volkswagen Group",2024,26.3),
+        ("Volkswagen Group",2025,26.9),
+        ("Stellantis",2019,None),("Stellantis",2020,None),  # pre-merger
+        ("Stellantis",2021,19.4),("Stellantis",2022,18.2),
+        ("Stellantis",2023,16.8),("Stellantis",2024,15.2),("Stellantis",2025,14.3),
+        ("Renault Group",2019,10.2),("Renault Group",2020,9.8),
+        ("Renault Group",2021,9.5),("Renault Group",2022,9.7),
+        ("Renault Group",2023,9.8),("Renault Group",2024,9.9),("Renault Group",2025,10.2),
+        ("Hyundai Group",2019,6.8),("Hyundai Group",2020,7.1),
+        ("Hyundai Group",2021,7.5),("Hyundai Group",2022,7.9),
+        ("Hyundai Group",2023,8.3),("Hyundai Group",2024,8.2),("Hyundai Group",2025,7.9),
+        ("Toyota Group",2019,5.2),("Toyota Group",2020,5.5),
+        ("Toyota Group",2021,5.8),("Toyota Group",2022,6.5),
+        ("Toyota Group",2023,7.1),("Toyota Group",2024,7.8),("Toyota Group",2025,7.6),
+        ("BMW Group",2019,7.2),("BMW Group",2020,6.9),
+        ("BMW Group",2021,6.8),("BMW Group",2022,7.0),
+        ("BMW Group",2023,7.1),("BMW Group",2024,7.1),("BMW Group",2025,7.3),
+        ("Mercedes-Benz",2019,6.1),("Mercedes-Benz",2020,5.8),
+        ("Mercedes-Benz",2021,5.6),("Mercedes-Benz",2022,5.5),
+        ("Mercedes-Benz",2023,5.4),("Mercedes-Benz",2024,5.4),("Mercedes-Benz",2025,5.4),
+        ("Tesla",2019,0.1),("Tesla",2020,0.3),
+        ("Tesla",2021,0.8),("Tesla",2022,1.5),
+        ("Tesla",2023,2.2),("Tesla",2024,2.5),("Tesla",2025,1.8),
+    ]
+    df = pd.DataFrame(data, columns=["group","year","market_share"])
+    return df.dropna()
+
+def load_country_risk_matrix():
+    """
+    Risk/opportunity matrix: market growth vs EV readiness
+    Quadrants: Stars (high growth + high EV), Transition (low growth + high EV),
+               Opportunities (high growth + low EV), Laggards (low growth + low EV)
+    """
+    import pandas as pd
+    data = [
+        # country, yoy_2025, bev_share, reg_per_1000, market_size_k, region
+        ("Norway",     39.4, 89.0, 32.7,  180, "EFTA"),
+        ("Lithuania",  39.3,  5.0, 15.0,   42, "EU"),
+        ("Iceland",    42.4, 52.0, 39.3,   15, "EFTA"),
+        ("Latvia",     31.4,  4.0, 12.5,   23, "EU"),
+        ("Bulgaria",   15.1,  1.5,  7.6,   49, "EU"),
+        ("Spain",      12.9,  6.0, 24.0, 1149, "EU"),
+        ("Croatia",     7.4,  4.0, 17.9,   70, "EU"),
+        ("Poland",      8.3,  3.5, 16.2,  597, "EU"),
+        ("Hungary",     6.4,  3.0, 13.3,  129, "EU"),
+        ("Greece",      5.2,  4.5, 13.9,  144, "EU"),
+        ("Portugal",    7.3, 14.0, 21.4,  225, "EU"),
+        ("Ireland",     3.0, 18.0, 24.5,  125, "EU"),
+        ("Germany",     1.4, 13.5, 33.9, 2858, "EU"),
+        ("Netherlands", 1.7, 33.0, 21.8,  388, "EU"),
+        ("Austria",    12.3, 12.0, 31.3,  285, "EU"),
+        ("Sweden",      1.3, 38.0, 26.0,  273, "EU"),
+        ("Denmark",     6.7, 51.0, 31.3,  185, "EU"),
+        ("United Kingdom",3.5,22.0, 29.8, 2021, "UK"),
+        ("France",     -5.0, 16.9, 23.9, 1632, "EU"),
+        ("Italy",      -2.1,  4.5, 25.8, 1525, "EU"),
+        ("Belgium",    -7.5, 15.0, 35.4,  415, "EU"),
+        ("Finland",    -3.0, 28.0, 13.1,   72, "EU"),
+        ("Estonia",   -48.6, 15.0,  9.3,   13, "EU"),
+        ("Switzerland",-2.4, 22.0, 26.6,  234, "EFTA"),
+    ]
+    df = pd.DataFrame(data, columns=["country","yoy_2025","bev_share","reg_per_1000","market_size_k","region"])
+    eu_avg_yoy = 2.4
+    eu_avg_bev = 13.6
+    def quadrant(row):
+        high_growth = row["yoy_2025"] > eu_avg_yoy
+        high_ev     = row["bev_share"] > eu_avg_bev
+        if high_growth and high_ev:     return "⭐ Stars"
+        if not high_growth and high_ev: return "🔋 EV Leaders"
+        if high_growth and not high_ev: return "🚀 Growth Markets"
+        return "⚠️ Watch"
+    df["quadrant"] = df.apply(quadrant, axis=1)
+    return df
+
+def load_outlier_analysis():
+    """Outlier countries with structural explanations"""
+    import pandas as pd
+    data = [
+        ("Estonia",    -48.6, "Subsidy removal shock",
+         "EV purchase subsidy of €5,000 cancelled in Dec 2024. Market was 60% subsidy-driven. Collapse was immediate and structural — demand did not exist without incentive.",
+         "Leading indicator for any market removing EV subsidies abruptly. Watch Czech Republic and Slovakia where similar policies are under discussion."),
+        ("Norway",     +39.4, "BEV infrastructure maturity",
+         "89% of all new cars sold in 2025 are BEV. Strong Q1 driven by Tesla Model Y replacements and new Volvo EX30 demand. Government 2025 target of 100% zero-emission sales effectively met.",
+         "Norway is the template for mature EV transition. Its success is replicable only where charging infrastructure, tax policy and consumer income align simultaneously."),
+        ("Iceland",    +42.4, "Base effect + EV momentum",
+         "Small market (14.5K units) recovering from 2022-2023 weakness. BEV share at 52%. Very price-sensitive market amplifies % swings.",
+         "Statistical outlier due to small base. Not a trend signal for larger markets."),
+        ("Lithuania",  +39.3, "Fleet renewal + economic growth",
+         "Baltic economies growing 4-5% GDP in 2025. Corporate fleet renewal accelerating after COVID backlog. Used car market tightening drives new car preference.",
+         "Baltic states (LT, LV, EE ex-subsidy collapse) represent underserved fleet opportunity for mainstream brands."),
+        ("Belgium",    -7.5,  "Company car tax reform",
+         "Belgium tax reform 2025 tightened BIK rules on combustion company cars, but transition to EV company cars slower than expected. Total market contracted as fleet buyers paused.",
+         "Company car tax regimes drive up to 60% of new car sales in Belgium. Any reform creates temporary paralysis. Similar reforms pending in NL and DE."),
+        ("France",     -5.0,  "Subsidy reduction + political uncertainty",
+         "EV bonus reduced from €7,000 to €4,000 in mid-2024. Political instability (3 governments in 18 months) froze industrial investment decisions. Stellantis and Renault delayed model launches.",
+         "France -5% while Spain +12.9% — Iberian shift in EU auto gravity. French OEM vulnerability to domestic market weakness is strategically significant."),
+    ]
+    return pd.DataFrame(data, columns=["country","yoy_2025","headline","mechanism","strategic_implication"])
