@@ -153,14 +153,17 @@ def load_monthly_data():
     return df
 
 def load_forecast_2026():
+    # EU+EFTA+UK scope — 2025 baseline: 13.27M (ACEA confirmed)
+    # Pessimistic: flat (0%), Base: +2.5%, Optimistic: +5.0%
+    base_2025 = 13270
     data = [
-        ("Pessimistic",10960,17.4,"#D85A30"),
-        ("Base case",11260,21.5,"#185FA5"),
-        ("Optimistic",11550,25.0,"#1D9E75"),
+        ("Pessimistic", round(base_2025 * 1.000), 17.4, "#D85A30"),
+        ("Base case",   round(base_2025 * 1.025), 21.5, "#185FA5"),
+        ("Optimistic",  round(base_2025 * 1.050), 25.0, "#1D9E75"),
     ]
-    df = pd.DataFrame(data, columns=["scenario","reg_2026_k_eu","bev_share_2026","color"])
-    df["reg_2025_k_eu"] = 10181
-    df["growth_vs_2025"] = ((df["reg_2026_k_eu"]-df["reg_2025_k_eu"])/df["reg_2025_k_eu"]*100).round(1)
+    df = pd.DataFrame(data, columns=["scenario","reg_2026_k","bev_share_2026","color"])
+    df["reg_2025_k"] = base_2025
+    df["growth_vs_2025"] = ((df["reg_2026_k"]-df["reg_2025_k"])/df["reg_2025_k"]*100).round(1)
     return df
 
 def load_market_concentration():
@@ -1228,24 +1231,31 @@ with tabs[9]:
     st.markdown("<br>", unsafe_allow_html=True)
 
     # Waterfall assumptions
-    with st.expander("📋 Forecast assumptions"):
+    with st.expander("📋 Forecast assumptions & methodology"):
         st.markdown("""
-**Base case (+2.5% EU, ~13.3M EU+EFTA+UK)**
-- Spain and Poland sustain above-average growth
-- Germany stabilises after 2024-2025 weakness
-- BEV share reaches ~21.5% driven by CO₂ compliance pressure
+**Base case (+2.5% → ~13.60M EU+EFTA+UK)**
+- Spain and Poland sustain above-average growth (+8-10%)
+- Germany stabilises after 2024-2025 structural weakness
+- BEV share reaches ~21.5% driven by EU CO₂ compliance pressure on OEMs
 - No major macro shock or new tariff escalation
+- Key model launches: VW ID.2, Renault 5 E-Tech, Leapmotor C10
 
-**Optimistic (+5%, ~13.8M)**
-- EU EV incentive expansion (several countries discussing)
-- Strong H2 driven by new model launches (VW ID.2, Renault 5, Leapmotor C10)
-- Iberian growth extends to Italy recovery
+**Optimistic (+5.0% → ~13.93M EU+EFTA+UK)**
+- EU EV incentive expansion (France, Germany, Italy under discussion)
+- Strong H2 driven by affordable EV launches in €20-25K range
+- Iberian growth extends — Italy shows early recovery signs
+- BYD and Chinese brands accelerate, expanding total market
 
-**Pessimistic (flat, ~12.9M)**
-- US tariff escalation hits EU auto exports, production cuts
-- Consumer confidence deteriorates (high rates, energy costs)
-- German market fails to recover from structural shift
-- BEV share stagnates if incentives not renewed
+**Pessimistic (flat 0% → ~13.27M EU+EFTA+UK)**
+- US tariff escalation hits EU auto exports → production cuts, layoffs
+- Consumer confidence deteriorates (interest rates, energy costs)
+- German market structural shift deepens — fleet buyers delay
+- BEV stagnates: incentives not renewed, infrastructure gaps persist
+
+---
+*Methodology: scenario analysis based on ACEA 2024-2025 trend data.*
+*Scope: EU27 + EFTA (Norway, Iceland, Switzerland) + UK = 31 markets.*
+*Not econometric modelling. Not investment advice.*
         """)
 
     st.markdown('<div class="data-note">Forecast EU27 only · EU+EFTA+UK adds ~11% · Source: analyst estimates based on ACEA / S&P Global Mobility trend data</div>', unsafe_allow_html=True)
