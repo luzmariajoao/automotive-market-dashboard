@@ -84,6 +84,172 @@ ISO = {
 # ── Load data ─────────────────────────────────────────────────────────────────
 
 
+# ── All analytics functions — embedded inline, no loader.py dependency ────────
+import numpy as np
+
+def load_ratio_per_capita():
+    sales_pop = {
+        "Austria":(253789,284978,9.1),"Belgium":(448277,414770,11.7),
+        "Bulgaria":(42941,49419,6.5),"Croatia":(65020,69841,3.9),
+        "Cyprus":(15057,14634,1.2),"Czechia":(231597,248719,10.8),
+        "Denmark":(173114,184641,5.9),"Estonia":(25386,13055,1.4),
+        "Finland":(74064,71881,5.5),"France":(1718412,1632152,68.2),
+        "Germany":(2817331,2857591,84.4),"Greece":(137075,144199,10.4),
+        "Hungary":(121611,129440,9.7),"Ireland":(121196,124954,5.1),
+        "Italy":(1559229,1524843,59.0),"Latvia":(17329,22506,1.8),
+        "Lithuania":(30122,41974,2.8),"Luxembourg":(46659,47158,0.67),
+        "Malta":(7663,6468,0.54),"Netherlands":(381227,388024,17.8),
+        "Poland":(551568,597435,36.8),"Portugal":(209715,225039,10.5),
+        "Romania":(151105,156803,19.0),"Slovakia":(93409,93103,5.5),
+        "Slovenia":(53018,57556,2.1),"Spain":(1016885,1148650,47.8),
+        "Sweden":(269582,272998,10.5),"Iceland":(10233,14547,0.37),
+        "Norway":(128687,179632,5.5),"Switzerland":(239535,233737,8.8),
+        "United Kingdom":(1952778,2020523,67.7),
+    }
+    rows = []
+    for country,(s24,s25,pop) in sales_pop.items():
+        rows.append({"country":country,"sales_2024":s24,"sales_2025":s25,"population_m":pop,
+            "reg_per_1000_2024":round(s24/(pop*1000),1),"reg_per_1000_2025":round(s25/(pop*1000),1),
+            "1_per_n_2024":int(round(pop*1e6/s24)),"1_per_n_2025":int(round(pop*1e6/s25))})
+    return pd.DataFrame(rows).sort_values("reg_per_1000_2025",ascending=False).reset_index(drop=True)
+
+def load_top_models_with_year(year=2024):
+    data_2024 = [
+        (1,"Sandero","Dacia","Renault Group","Petrol/LPG","#1 for first time — dethroned VW Golf"),
+        (2,"Clio","Renault","Renault Group","Petrol/Hybrid","2nd consecutive year in 2nd place"),
+        (3,"Golf","Volkswagen","Volkswagen Group","Petrol/Diesel","215,700 units, +17%"),
+        (4,"Model Y","Tesla","Tesla","Electric","#1 in NL, SE, CH, DK, NO"),
+        (5,"T-Roc","Volkswagen","Volkswagen Group","Petrol/Diesel","Slipped from 4th"),
+        (6,"208","Peugeot","Stellantis","Petrol/Electric","Top model in 2022"),
+        (7,"Yaris Cross","Toyota","Toyota Group","Hybrid","Improved one rank"),
+        (8,"Octavia","Skoda","Volkswagen Group","Petrol/Diesel","Improved two ranks"),
+        (9,"Duster","Dacia","Renault Group","Petrol/LPG/Hybrid","Entered top 10 from 15th"),
+        (10,"Yaris","Toyota","Toyota Group","Hybrid","Entered top 10 from 14th"),
+    ]
+    data_2025 = [
+        (1,"Sandero","Dacia","Renault Group","Petrol/LPG","243,676 units — 2nd consecutive #1"),
+        (2,"Clio","Renault","Renault Group","Petrol/Hybrid","~238,000 units — 2nd consecutive"),
+        (3,"T-Roc","Volkswagen","Volkswagen Group","Petrol/Diesel","211,241 units — up from #5"),
+        (4,"Tiguan","Volkswagen","Volkswagen Group","Petrol/Diesel","197,000 units, +19.7%"),
+        (5,"Golf","Volkswagen","Volkswagen Group","Petrol/Diesel","195,455 units — slipped from #3"),
+        (6,"208","Peugeot","Stellantis","Petrol/Electric","~185,000 units"),
+        (7,"Yaris Cross","Toyota","Toyota Group","Hybrid","~175,000 units"),
+        (8,"Duster","Dacia","Renault Group","Petrol/LPG/Hybrid","~168,000 units, +22%"),
+        (9,"Yaris","Toyota","Toyota Group","Hybrid","~148,000 units"),
+        (10,"C3","Citroen","Stellantis","Petrol/Electric","~145,000 — Model Y dropped out"),
+    ]
+    cols = ["rank","model","brand","group","fuel_type","notes"]
+    return pd.DataFrame(data_2025 if year==2025 else data_2024, columns=cols)
+
+def load_monthly_data():
+    data = [
+        ("Jan",760,752,10.9,15.0),("Feb",850,843,12.4,14.0),("Mar",1050,1069,13.8,15.5),
+        ("Apr",785,798,14.1,14.8),("May",880,895,14.5,15.5),("Jun",905,916,13.5,17.2),
+        ("Jul",810,839,13.5,14.8),("Aug",490,509,12.2,14.5),("Sep",1095,1139,17.9,18.5),
+        ("Oct",870,920,13.7,19.0),("Nov",825,872,12.8,20.5),("Dec",668,690,15.9,25.0),
+    ]
+    df = pd.DataFrame(data, columns=["month","reg_2024_k","reg_2025_k","bev_pct_2024","bev_pct_2025"])
+    df["month_num"] = range(1,13)
+    return df
+
+def load_forecast_2026():
+    data = [
+        ("Pessimistic",10960,17.4,"#D85A30"),
+        ("Base case",11260,21.5,"#185FA5"),
+        ("Optimistic",11550,25.0,"#1D9E75"),
+    ]
+    df = pd.DataFrame(data, columns=["scenario","reg_2026_k_eu","bev_share_2026","color"])
+    df["reg_2025_k_eu"] = 10181
+    df["growth_vs_2025"] = ((df["reg_2026_k_eu"]-df["reg_2025_k_eu"])/df["reg_2025_k_eu"]*100).round(1)
+    return df
+
+def load_market_concentration():
+    b25 = _get_brands(2025); b24 = _get_brands(2024)
+    shares_25 = list(b25["market_share"])+[max(0,100-b25["market_share"].sum())]
+    shares_24 = list(b24["market_share"])+[max(0,100-b24["market_share"].sum())]
+    from loader import load_manufacturer_groups
+    g25 = load_manufacturer_groups(2025); g24 = load_manufacturer_groups(2024)
+    return {
+        "brand_hhi_2025":round(sum(s**2 for s in shares_25),1),
+        "brand_hhi_2024":round(sum(s**2 for s in shares_24),1),
+        "group_hhi_2025":round(sum(s**2 for s in g25["market_share"]),1),
+        "group_hhi_2024":round(sum(s**2 for s in g24["market_share"]),1),
+        "top3_share_2025":round(b25.head(3)["market_share"].sum(),1),
+        "top3_share_2024":round(b24.head(3)["market_share"].sum(),1),
+        "top5_share_2025":round(b25.head(5)["market_share"].sum(),1),
+        "top5_share_2024":round(b24.head(5)["market_share"].sum(),1),
+    }
+
+def load_group_share_evolution():
+    data = [
+        ("Volkswagen Group",2019,24.1),("Volkswagen Group",2020,24.8),("Volkswagen Group",2021,25.3),
+        ("Volkswagen Group",2022,25.8),("Volkswagen Group",2023,26.0),("Volkswagen Group",2024,26.3),("Volkswagen Group",2025,26.9),
+        ("Stellantis",2021,19.4),("Stellantis",2022,18.2),("Stellantis",2023,16.8),
+        ("Stellantis",2024,15.2),("Stellantis",2025,14.3),
+        ("Renault Group",2019,10.2),("Renault Group",2020,9.8),("Renault Group",2021,9.5),
+        ("Renault Group",2022,9.7),("Renault Group",2023,9.8),("Renault Group",2024,9.9),("Renault Group",2025,10.2),
+        ("Hyundai Group",2019,6.8),("Hyundai Group",2020,7.1),("Hyundai Group",2021,7.5),
+        ("Hyundai Group",2022,7.9),("Hyundai Group",2023,8.3),("Hyundai Group",2024,8.2),("Hyundai Group",2025,7.9),
+        ("Toyota Group",2019,5.2),("Toyota Group",2020,5.5),("Toyota Group",2021,5.8),
+        ("Toyota Group",2022,6.5),("Toyota Group",2023,7.1),("Toyota Group",2024,7.8),("Toyota Group",2025,7.6),
+        ("BMW Group",2019,7.2),("BMW Group",2020,6.9),("BMW Group",2021,6.8),
+        ("BMW Group",2022,7.0),("BMW Group",2023,7.1),("BMW Group",2024,7.1),("BMW Group",2025,7.3),
+        ("Mercedes-Benz",2019,6.1),("Mercedes-Benz",2020,5.8),("Mercedes-Benz",2021,5.6),
+        ("Mercedes-Benz",2022,5.5),("Mercedes-Benz",2023,5.4),("Mercedes-Benz",2024,5.4),("Mercedes-Benz",2025,5.4),
+        ("Tesla",2019,0.1),("Tesla",2020,0.3),("Tesla",2021,0.8),
+        ("Tesla",2022,1.5),("Tesla",2023,2.2),("Tesla",2024,2.5),("Tesla",2025,1.8),
+    ]
+    return pd.DataFrame(data, columns=["group","year","market_share"])
+
+def load_country_risk_matrix():
+    data = [
+        ("Norway",39.4,89.0,32.7,180,"EFTA"),("Lithuania",39.3,5.0,15.0,42,"EU"),
+        ("Iceland",42.4,52.0,39.3,15,"EFTA"),("Latvia",31.4,4.0,12.5,23,"EU"),
+        ("Bulgaria",15.1,1.5,7.6,49,"EU"),("Spain",12.9,6.0,24.0,1149,"EU"),
+        ("Croatia",7.4,4.0,17.9,70,"EU"),("Poland",8.3,3.5,16.2,597,"EU"),
+        ("Hungary",6.4,3.0,13.3,129,"EU"),("Greece",5.2,4.5,13.9,144,"EU"),
+        ("Portugal",7.3,14.0,21.4,225,"EU"),("Ireland",3.0,18.0,24.5,125,"EU"),
+        ("Germany",1.4,13.5,33.9,2858,"EU"),("Netherlands",1.7,33.0,21.8,388,"EU"),
+        ("Austria",12.3,12.0,31.3,285,"EU"),("Sweden",1.3,38.0,26.0,273,"EU"),
+        ("Denmark",6.7,51.0,31.3,185,"EU"),("United Kingdom",3.5,22.0,29.8,2021,"UK"),
+        ("France",-5.0,16.9,23.9,1632,"EU"),("Italy",-2.1,4.5,25.8,1525,"EU"),
+        ("Belgium",-7.5,15.0,35.4,415,"EU"),("Finland",-3.0,28.0,13.1,72,"EU"),
+        ("Estonia",-48.6,15.0,9.3,13,"EU"),("Switzerland",-2.4,22.0,26.6,234,"EFTA"),
+    ]
+    df = pd.DataFrame(data, columns=["country","yoy_2025","bev_share","reg_per_1000","market_size_k","region"])
+    def quad(r):
+        hg = r["yoy_2025"]>2.4; hb = r["bev_share"]>13.6
+        if hg and hb: return "⭐ Stars"
+        if not hg and hb: return "🔋 EV Leaders"
+        if hg and not hb: return "🚀 Growth Markets"
+        return "⚠️ Watch"
+    df["quadrant"] = df.apply(quad, axis=1)
+    return df
+
+def load_outlier_analysis():
+    data = [
+        ("Estonia",-48.6,"Subsidy removal shock",
+         "EV purchase subsidy of €5,000 cancelled Dec 2024. Market was 60% subsidy-driven. Collapse was immediate.",
+         "Leading indicator for any market removing EV subsidies abruptly. Watch Czech Republic and Slovakia."),
+        ("Norway",+39.4,"BEV infrastructure maturity",
+         "89% of new cars in 2025 are BEV. Strong Q1 driven by Tesla Model Y replacements and Volvo EX30.",
+         "Norway is the template for mature EV transition — replicable only where infrastructure, tax policy and income align."),
+        ("Iceland",+42.4,"Base effect + EV momentum",
+         "Small market (14.5K units) recovering from 2022-2023 weakness. BEV share 52%.",
+         "Statistical outlier due to small base. Not a trend signal for larger markets."),
+        ("Lithuania",+39.3,"Fleet renewal + economic growth",
+         "Baltic economies growing 4-5% GDP. Corporate fleet renewal after COVID backlog.",
+         "Baltic states represent underserved fleet opportunity for mainstream brands."),
+        ("Belgium",-7.5,"Company car tax reform",
+         "Belgium tax reform tightened BIK rules on combustion company cars. Fleet buyers paused.",
+         "Company car regimes drive ~60% of Belgium new sales. Any reform creates temporary paralysis."),
+        ("France",-5.0,"Subsidy reduction + political uncertainty",
+         "EV bonus cut from €7,000 to €4,000 mid-2024. Political instability froze industrial decisions.",
+         "France -5% while Spain +12.9% — Iberian shift in EU auto gravity. Strategic significance."),
+    ]
+    return pd.DataFrame(data, columns=["country","yoy_2025","headline","mechanism","strategic_implication"])
+
+
 # ── 30 brands embedded — independent of loader.py version ───────────────────
 def _get_brands(year=2025):
     import pandas as pd
@@ -194,6 +360,14 @@ def _get_models_for_brand(brand):
     return pd.DataFrame(data, columns=["model","fuel_type","eu_registrations_est","yoy_change"])
 
 
+
+
+# ── Analytics functions — inline in dashboard (loader.py independent) ──────
+import numpy as np
+
+
+
+
 @st.cache_data
 def get_data():
   c24 = load_sales_by_country(2024)
@@ -208,7 +382,7 @@ def get_data():
   return {
     "c24": c24, "c25": c25, "c25_ext": c25_ext,
     "b24": _get_brands(2024), "b25": _get_brands(2025),
-    "mod24": load_top_models(2024), "mod25": load_top_models(2025),
+    "mod24": load_top_models_with_year(2024), "mod25": load_top_models_with_year(2025),
     "fuel": load_fuel_type_mix(),
     "seg": load_segment_share(),
     "co2": co2,
