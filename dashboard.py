@@ -544,9 +544,11 @@ with tabs[0]:
     D["co2"][["country","co2_gkm_2024","bev_share_pct_2024"]], on="country", how="left",
     suffixes=("","_y")
   )
-  from loader import load_cars_per_1000
-  c1k = load_cars_per_1000()
-  map_df = map_df.merge(c1k[["country","cars_per_1000"]], on="country", how="left")
+  # Use correct per-capita data from load_ratio_per_capita (new registrations / population)
+  map_df = map_df.merge(
+    D["ratio"][["country","reg_per_1000_2025"]].rename(columns={"reg_per_1000_2025":"cars_per_1000"}),
+    on="country", how="left"
+  )
 
   if map_metric == "Vehicle Registrations":
     color_col = "sales_2025"; title = f"New car registrations {year}"; fmt = ":,.0f"
@@ -1224,7 +1226,7 @@ with tabs[9]:
             st.markdown(f"""
 <div style="background:#f9f9f9;border-radius:8px;padding:16px;border-left:4px solid {color};border:0.5px solid #e0e0e0">
 <div style="font-size:12px;color:#888;font-weight:600;text-transform:uppercase">{row["scenario"]}</div>
-<div style="font-size:24px;font-weight:700;color:#0d1b2a;margin-top:4px">{row["reg_2026_k_eu"]/1000:.2f}M</div>
+<div style="font-size:24px;font-weight:700;color:#0d1b2a;margin-top:4px">{row["reg_2026_k"]/1000:.2f}M</div>
 <div style="font-size:12px;color:{color};margin-top:2px">{'▲' if growth>0 else '▼'} {growth:+.1f}% vs 2025 · BEV {row["bev_share_2026"]:.1f}%</div>
 </div>""", unsafe_allow_html=True)
 
