@@ -630,11 +630,16 @@ with tabs[1]:
       font=dict(size=11))
     st.plotly_chart(fig, use_container_width=True)
 
-    st.markdown(f"##### Top 10 models — {year}")
-    _mod_key = f"mod{year}" if f"mod{year}" in D else "mod24"
-    tbl = D[_mod_key][["rank","model","brand","fuel_type"]].copy()
-    tbl.columns = ["#","Model","Brand","Fuel"]
-    st.dataframe(tbl, hide_index=True, use_container_width=True, height=280)
+  st.divider()
+  # Top 10 models — centred full-width below the two columns
+  st.markdown(f"##### Top 10 models — new car registrations Europe {year}")
+  _mod_key = f"mod{year}" if f"mod{year}" in D else "mod24"
+  tbl = D[_mod_key][["rank","model","brand","fuel_type"]].copy()
+  tbl.columns = ["#","Model","Brand","Fuel"]
+  _l, _c, _r = st.columns([1, 2, 1])
+  with _c:
+    st.dataframe(tbl, hide_index=True, use_container_width=True, height=380)
+  st.markdown('<div class="data-note">Source: JATO Dynamics · EU+EFTA+UK full year · Units (new registrations)</div>', unsafe_allow_html=True)
 
   st.divider()
   st.markdown("##### Registration ratio per person — 2025 (registrations per 1,000 people)")
@@ -1226,7 +1231,7 @@ with tabs[9]:
             st.markdown(f"""
 <div style="background:#f9f9f9;border-radius:8px;padding:16px;border-left:4px solid {color};border:0.5px solid #e0e0e0">
 <div style="font-size:12px;color:#888;font-weight:600;text-transform:uppercase">{row["scenario"]}</div>
-<div style="font-size:24px;font-weight:700;color:#0d1b2a;margin-top:4px">{row["reg_2026_k"]/1000:.2f}M</div>
+<div style="font-size:24px;font-weight:700;color:#0d1b2a;margin-top:4px">{row.get("reg_2026_k", row.get("reg_2026_k_eu", 0))/1000:.2f}M</div>
 <div style="font-size:12px;color:{color};margin-top:2px">{'▲' if growth>0 else '▼'} {growth:+.1f}% vs 2025 · BEV {row["bev_share_2026"]:.1f}%</div>
 </div>""", unsafe_allow_html=True)
 
