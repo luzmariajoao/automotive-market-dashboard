@@ -1293,15 +1293,19 @@ A declining HHI signals increasing competition (new entrants, fragmentation).
 
         with col_m:
             metrics_data = {
-                "Metric": ["Brand HHI 2024", "Brand HHI 2025", "Group HHI 2024", "Group HHI 2025",
-                           "Top 3 brand share 2024", "Top 3 brand share 2025",
-                           "Top 5 brand share 2024", "Top 5 brand share 2025"],
-                "Value": [f"{hhi['brand_hhi_2024']:.0f}", f"{hhi['brand_hhi_2025']:.0f}",
-                         f"{hhi['group_hhi_2024']:.0f}", f"{hhi['group_hhi_2025']:.0f}",
-                         f"{hhi['top3_share_2024']:.1f}%", f"{hhi['top3_share_2025']:.1f}%",
-                         f"{hhi['top5_share_2024']:.1f}%", f"{hhi['top5_share_2025']:.1f}%"],
-                "Signal": ["—", "▼ More competitive", "—", "▲ Group consolidation",
-                          "—", "▼ Fragmentation", "—", "▼ Fragmentation"],
+                "Metric": ["Brand HHI", "Group HHI", "Top 3 brand share", "Top 5 brand share"],
+                "2024":   [f"{hhi['brand_hhi_2024']:.0f}", f"{hhi['group_hhi_2024']:.0f}",
+                           f"{hhi['top3_share_2024']:.1f}%", f"{hhi['top5_share_2024']:.1f}%"],
+                "2025":   [f"{hhi['brand_hhi_2025']:.0f}", f"{hhi['group_hhi_2025']:.0f}",
+                           f"{hhi['top3_share_2025']:.1f}%", f"{hhi['top5_share_2025']:.1f}%"],
+                "Change": [
+                    f"{hhi['brand_hhi_2025']-hhi['brand_hhi_2024']:+.0f}",
+                    f"{hhi['group_hhi_2025']-hhi['group_hhi_2024']:+.0f}",
+                    f"{hhi['top3_share_2025']-hhi['top3_share_2024']:+.1f} pp",
+                    f"{hhi['top5_share_2025']-hhi['top5_share_2024']:+.1f} pp",
+                ],
+                "Signal": ["▼ More competitive", "▼ Slightly less concentrated",
+                           "▼ Fragmentation", "▶ Stable"],
             }
             st.dataframe(pd.DataFrame(metrics_data), hide_index=True, use_container_width=True)
 
