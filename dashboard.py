@@ -493,6 +493,8 @@ top_country = df.nlargest(1, sales_col).iloc[0]
 top_brand = D["b25"].iloc[0] if year == 2025 else D["b24"].iloc[0]
 bev = D["fuel"][D["fuel"]["year"] == year]["bev_pct"].values[0] if year in D["fuel"]["year"].values else (17.4 if year == 2025 else 13.6)
 
+st.markdown('<div style="background:#EAF3FB;border-left:4px solid #185FA5;border-radius:4px;padding:8px 16px;margin-bottom:4px;font-size:13px;color:#1a3a5c">📊 <strong>All data = new passenger car registrations (units) — not monetary value · not total fleet · not used cars</strong> &nbsp;·&nbsp; Source: ACEA · JATO · S&P Global Mobility · ICCT &nbsp;·&nbsp; 31 markets: EU27+EFTA+UK</div>', unsafe_allow_html=True)
+
 k1, k2, k3, k4, k5 = st.columns(5)
 with k1: st.markdown(kpi(f"Total registrations {year}", f"{total/1e6:.2f}M", f"{delta_total:.1f}% vs {year-1}", delta_total>0), unsafe_allow_html=True)
 with k2: st.markdown(kpi(f"Largest market {year}", top_country["country"], f"{top_country[sales_col]/1e6:.2f}M units", True), unsafe_allow_html=True)
@@ -761,7 +763,7 @@ with tabs[3]:
           y=[r["sales"] for r in trend_data],
           marker_color=[BLUE if i==0 else (TEAL if trend_data[1]["sales"] > trend_data[0]["sales"] else CORAL)
                  for i in range(len(trend_data))],
-          text=[f"{r['sales']/1e3:.0f}K" for r in trend_data],
+          text=[f"{r['sales']/1e6:.2f}M ({r['sales']/1e3:.0f}K)" for r in trend_data],
           textposition="outside",
         ))
         pct = (trend_data[1]["sales"] - trend_data[0]["sales"]) / trend_data[0]["sales"] * 100
