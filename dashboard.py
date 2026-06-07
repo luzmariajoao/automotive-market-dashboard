@@ -804,99 +804,206 @@ with tabs[3]:
 
 # ── TAB 5: COUNTRY COMPARISON ─────────────────────────────────────────────────
 with tabs[4]:
-  st.markdown('<div class="section-hd">Country Comparison</div>', unsafe_allow_html=True)
+  st.markdown('<div class="section-hd">Comparison Tool</div>', unsafe_allow_html=True)
 
-  all_c = sorted(D["c25"]["country"].tolist())
-  col_sel1, col_sel2 = st.columns(2)
-  with col_sel1:
-    _ca = st.session_state.compare_a if st.session_state.compare_a in all_c else all_c[0]
-    ca = st.selectbox("Country A", all_c, index=all_c.index(_ca))
-    st.session_state.compare_a = ca
-  with col_sel2:
-    _cb = st.session_state.compare_b if st.session_state.compare_b in all_c else (all_c[1] if len(all_c) > 1 else all_c[0])
-    cb = st.selectbox("Country B", all_c, index=all_c.index(_cb))
-    st.session_state.compare_b = cb
-
-  def get_country_row(country):
-    r25 = D["c25"][D["c25"]["country"]==country]
-    r24 = D["c24"][D["c24"]["country"]==country]
-    co2r = D["co2"][D["co2"]["country"]==country]
-    prodr = D["prod"][D["prod"]["country"]==country] if len(D["prod"][D["prod"]["country"]==country]) else None
-    ratio_r = D["ratio"][D["ratio"]["country"]==country]
-    return {
-      "country": country,
-      "sales_2025": int(r25["sales_2025"].values[0]) if len(r25) else 0,
-      "sales_2024": int(r25["sales_2024"].values[0]) if len(r25) else 0,
-      "pct_change": float(r25["pct_change"].values[0]) if len(r25) else 0,
-      "region": r25["region"].values[0] if len(r25) else "—",
-      "co2": float(co2r["co2_gkm_2024"].values[0]) if len(co2r) else None,
-      "bev": float(co2r["bev_share_pct_2024"].values[0]) if len(co2r) else None,
-      "produced": int(prodr["cars_produced"].values[0]) if prodr is not None and len(prodr) else 0,
-      "reg_per_1000": float(ratio_r["reg_per_1000_2025"].values[0]) if len(ratio_r) else None,
-      "1_per_n": int(ratio_r["1_per_n_2025"].values[0]) if len(ratio_r) else None,
-    }
-
-  ra = get_country_row(ca)
-  rb = get_country_row(cb)
-
-  metrics = [
-    ("Registrations 2025", "sales_2025",  lambda v: f"{v:,.0f}"),
-    ("Registrations 2024", "sales_2024",  lambda v: f"{v:,.0f}"),
-    ("YoY Change",   "pct_change",  lambda v: f"{v:+.1f}%"),
-    ("CO₂ g/km (2024)", "co2",      lambda v: f"{v:.1f} g/km" if v else "—"),
-    ("BEV share (2024)", "bev",      lambda v: f"{v:.1f}%" if v else "—"),
-    ("Vehicles produced","produced",  lambda v: f"{v:,.0f}" if v else "—"),
-    ("Reg. per 1,000 people", "reg_per_1000", lambda v: f"{v:.1f}" if v else "—"),
-    ("1 reg. per", "1_per_n",    lambda v: f"every {v} people" if v else "—"),
-  ]
-
-  def diff_str(key, va, vb):
-    if va is None or vb is None: return "—"
-    try:
-      d = float(vb) - float(va)
-      if key == "pct_change": return f"{d:+.1f} pp"
-      if key in ("co2","bev","reg_per_1000"): return f"{d:+.1f}"
-      if key == "1_per_n": return f"{d:+.0f} people"
-      return f"{d:+,.0f}"
-    except: return "—"
-
-  # Tabela alinhada em HTML
-  rows_html = ""
-  for label, key, fmt in metrics:
-    va = ra.get(key)
-    vb = rb.get(key)
-    va_str = fmt(va) if va is not None else "—"
-    vb_str = fmt(vb) if vb is not None else "—"
-    d_str = diff_str(key, va, vb)
-    try:
-      d_num = float(vb) - float(va) if va is not None and vb is not None else 0
-      d_color = "#1D9E75" if d_num > 0 else ("#D85A30" if d_num < 0 else "#888")
-    except:
-      d_color = "#888"
-    rows_html += f"""
-    <tr>
-     <td style="padding:10px 12px;color:#888;font-size:13px;border-bottom:0.5px solid #f0f0f0">{label}</td>
-     <td style="padding:10px 12px;font-size:15px;font-weight:600;color:#0d1b2a;border-bottom:0.5px solid #f0f0f0">{va_str}</td>
-     <td style="padding:10px 12px;font-size:15px;font-weight:600;color:#0d1b2a;border-bottom:0.5px solid #f0f0f0">{vb_str}</td>
-     <td style="padding:10px 12px;font-size:13px;color:{d_color};font-weight:500;border-bottom:0.5px solid #f0f0f0">{d_str}</td>
-    </tr>"""
-
-  st.markdown(f"""
-<table style="width:100%;border-collapse:collapse;background:#fff;border-radius:8px;overflow:hidden;border:0.5px solid #e0e0e0">
- <thead>
-  <tr style="background:#f5f5f5">
-   <th style="padding:12px;text-align:left;font-size:12px;color:#888;font-weight:600;text-transform:uppercase">Metric</th>
-   <th style="padding:12px;text-align:left;font-size:14px;color:#0d1b2a;font-weight:700">{ca}</th>
-   <th style="padding:12px;text-align:left;font-size:14px;color:#0d1b2a;font-weight:700">{cb}</th>
-   <th style="padding:12px;text-align:left;font-size:12px;color:#888;font-weight:600;text-transform:uppercase">Difference</th>
-  </tr>
- </thead>
- <tbody>{rows_html}</tbody>
-</table>
-""", unsafe_allow_html=True)
+  compare_mode = st.radio("Compare by", ["🌍 Country", "🏎️ Brand", "🏭 Group"],
+    horizontal=True, label_visibility="collapsed")
 
   st.markdown("<br>", unsafe_allow_html=True)
-  st.markdown('<div class="data-note">Source: ACEA / ICCT 2024-2025 · number of new passenger car registrations, not monetary value</div>', unsafe_allow_html=True)
+
+  def render_comparison_table(name_a, name_b, row_a, row_b, metrics_list):
+    def diff_str(key, va, vb):
+      if va is None or vb is None: return "—"
+      try:
+        d = float(vb) - float(va)
+        if key in ("pct_change","yoy"): return f"{d:+.1f} pp"
+        if key in ("co2","bev","reg_per_1000","market_share"): return f"{d:+.1f}"
+        if key == "1_per_n": return f"{d:+.0f} people"
+        return f"{d:+,.0f}"
+      except: return "—"
+
+    rows_html = ""
+    for label, key, fmt in metrics_list:
+      va = row_a.get(key); vb = row_b.get(key)
+      va_str = fmt(va) if va is not None else "—"
+      vb_str = fmt(vb) if vb is not None else "—"
+      d_str = diff_str(key, va, vb)
+      try:
+        d_num = float(vb) - float(va) if va is not None and vb is not None else 0
+        d_color = "#1D9E75" if d_num > 0 else ("#D85A30" if d_num < 0 else "#888")
+      except: d_color = "#888"
+      rows_html += f"""<tr>
+<td style="padding:10px 12px;color:#888;font-size:13px;border-bottom:0.5px solid #f0f0f0">{label}</td>
+<td style="padding:10px 12px;font-size:15px;font-weight:600;color:#0d1b2a;border-bottom:0.5px solid #f0f0f0">{va_str}</td>
+<td style="padding:10px 12px;font-size:15px;font-weight:600;color:#0d1b2a;border-bottom:0.5px solid #f0f0f0">{vb_str}</td>
+<td style="padding:10px 12px;font-size:13px;color:{d_color};font-weight:500;border-bottom:0.5px solid #f0f0f0">{d_str}</td>
+</tr>"""
+    st.markdown(f"""
+<table style="width:100%;border-collapse:collapse;background:#fff;border-radius:8px;overflow:hidden;border:0.5px solid #e0e0e0">
+<thead><tr style="background:#f5f5f5">
+<th style="padding:12px;text-align:left;font-size:12px;color:#888;font-weight:600;text-transform:uppercase">Metric</th>
+<th style="padding:12px;text-align:left;font-size:14px;color:#0d1b2a;font-weight:700">{name_a}</th>
+<th style="padding:12px;text-align:left;font-size:14px;color:#0d1b2a;font-weight:700">{name_b}</th>
+<th style="padding:12px;text-align:left;font-size:12px;color:#888;font-weight:600;text-transform:uppercase">Difference</th>
+</tr></thead><tbody>{rows_html}</tbody></table>""", unsafe_allow_html=True)
+
+  # ── COUNTRY MODE ─────────────────────────────────────────────────────────────
+  if compare_mode == "🌍 Country":
+    all_c = sorted(D["c25"]["country"].tolist())
+    col_sel1, col_sel2 = st.columns(2)
+    with col_sel1:
+      _ca = st.session_state.compare_a if st.session_state.compare_a in all_c else all_c[0]
+      ca = st.selectbox("Country A", all_c, index=all_c.index(_ca))
+      st.session_state.compare_a = ca
+    with col_sel2:
+      _cb = st.session_state.compare_b if st.session_state.compare_b in all_c else (all_c[1] if len(all_c)>1 else all_c[0])
+      cb = st.selectbox("Country B", all_c, index=all_c.index(_cb))
+      st.session_state.compare_b = cb
+
+    def get_country_row(country):
+      r25 = D["c25"][D["c25"]["country"]==country]
+      co2r = D["co2"][D["co2"]["country"]==country]
+      prodr = D["prod"][D["prod"]["country"]==country]
+      ratio_r = D["ratio"][D["ratio"]["country"]==country]
+      return {
+        "sales_2025": int(r25["sales_2025"].values[0]) if len(r25) else 0,
+        "sales_2024": int(r25["sales_2024"].values[0]) if len(r25) else 0,
+        "pct_change": float(r25["pct_change"].values[0]) if len(r25) else 0,
+        "co2": float(co2r["co2_gkm_2024"].values[0]) if len(co2r) else None,
+        "bev": float(co2r["bev_share_pct_2024"].values[0]) if len(co2r) else None,
+        "produced": int(prodr["cars_produced"].values[0]) if len(prodr) else 0,
+        "reg_per_1000": float(ratio_r["reg_per_1000_2025"].values[0]) if len(ratio_r) else None,
+        "1_per_n": int(ratio_r["1_per_n_2025"].values[0]) if len(ratio_r) else None,
+      }
+
+    ra, rb = get_country_row(ca), get_country_row(cb)
+    metrics = [
+      ("Registrations 2025","sales_2025",lambda v: f"{v:,.0f}"),
+      ("Registrations 2024","sales_2024",lambda v: f"{v:,.0f}"),
+      ("YoY Change","pct_change",lambda v: f"{v:+.1f}%"),
+      ("CO₂ g/km (2024)","co2",lambda v: f"{v:.1f} g/km" if v else "—"),
+      ("BEV share (2024)","bev",lambda v: f"{v:.1f}%" if v else "—"),
+      ("Vehicles produced","produced",lambda v: f"{v:,.0f}" if v else "—"),
+      ("Reg. per 1,000 people","reg_per_1000",lambda v: f"{v:.1f}" if v else "—"),
+      ("1 reg. per","1_per_n",lambda v: f"every {v} people" if v else "—"),
+    ]
+    render_comparison_table(ca, cb, ra, rb, metrics)
+    st.markdown('<div class="data-note">Source: ACEA / ICCT 2024-2025 · new passenger car registrations (units)</div>', unsafe_allow_html=True)
+
+  # ── BRAND MODE ────────────────────────────────────────────────────────────────
+  elif compare_mode == "🏎️ Brand":
+    all_brands = D["b25"]["brand"].tolist()
+    col_sel1, col_sel2 = st.columns(2)
+    with col_sel1:
+      ba = st.selectbox("Brand A", all_brands, index=0)
+    with col_sel2:
+      ba_idx = all_brands.index("Toyota") if "Toyota" in all_brands else 1
+      bb = st.selectbox("Brand B", all_brands, index=ba_idx)
+
+    def get_brand_row(brand, yr=2025):
+      b = D["b25"] if yr==2025 else D["b24"]
+      r = b[b["brand"]==brand]
+      if not len(r): return {}
+      r = r.iloc[0]
+      sc = "sales_2025" if yr==2025 else "sales_2024"
+      sp = "sales_2024" if yr==2025 else "sales_2023"
+      return {
+        "sales_cur": int(r[sc]),
+        "sales_prev": int(r[sp]) if sp in r.index else None,
+        "yoy": float(r["pct_change"]),
+        "market_share": float(r["market_share"]),
+        "rank": int(r["rank"]),
+        "group": r["group"],
+      }
+
+    ra, rb = get_brand_row(ba, year), get_brand_row(bb, year)
+    sc_label = f"Registrations {year}"
+    sp_label = f"Registrations {year-1}"
+    metrics = [
+      (sc_label,"sales_cur",lambda v: f"{v:,.0f}" if v else "—"),
+      (sp_label,"sales_prev",lambda v: f"{v:,.0f}" if v else "—"),
+      ("YoY Change","yoy",lambda v: f"{v:+.1f}%"),
+      ("Market share","market_share",lambda v: f"{v:.1f}%"),
+      ("EU Rank","rank",lambda v: f"#{v}"),
+      ("Group","group",lambda v: str(v)),
+    ]
+    render_comparison_table(ba, bb, ra, rb, metrics)
+
+    # Mini bar chart
+    st.markdown("<br>", unsafe_allow_html=True)
+    _sc = f"sales_{year}"
+    fig_bc = go.Figure()
+    for brand, color in [(ba, BLUE), (bb, CORAL)]:
+      b_df = D["b25"] if year==2025 else D["b24"]
+      r = b_df[b_df["brand"]==brand]
+      if len(r):
+        fig_bc.add_trace(go.Bar(name=brand, x=[str(year-1), str(year)],
+          y=[r[f"sales_{year-1}"].values[0] if f"sales_{year-1}" in r.columns else 0,
+             r[_sc].values[0]],
+          marker_color=color))
+    fig_bc.update_layout(barmode="group", height=250,
+      margin=dict(l=0,r=0,t=10,b=10),
+      yaxis=dict(tickformat=".2s",gridcolor=LGRAY),
+      legend=dict(orientation="h",y=-0.2),
+      paper_bgcolor="rgba(0,0,0,0)", plot_bgcolor="rgba(0,0,0,0)", font=dict(size=11))
+    st.plotly_chart(fig_bc, use_container_width=True)
+    st.markdown('<div class="data-note">Source: ACEA / best-selling-cars.com · EU+EFTA+UK · Units (new registrations)</div>', unsafe_allow_html=True)
+
+  # ── GROUP MODE ────────────────────────────────────────────────────────────────
+  elif compare_mode == "🏭 Group":
+    all_groups = D["grp25"]["group"].tolist()
+    col_sel1, col_sel2 = st.columns(2)
+    with col_sel1:
+      ga = st.selectbox("Group A", all_groups, index=0)
+    with col_sel2:
+      gb_idx = 1 if len(all_groups) > 1 else 0
+      gb = st.selectbox("Group B", all_groups, index=gb_idx)
+
+    def get_group_row(group, yr=2025):
+      g = D["grp25"] if yr==2025 else D["grp24"]
+      r = g[g["group"]==group]
+      if not len(r): return {}
+      r = r.iloc[0]
+      sc = "sales_2025" if yr==2025 else "sales_2024"
+      sp = "sales_2024" if yr==2025 else "sales_2023"
+      brands_in_group = D["b25"][D["b25"]["group"]==group]["brand"].tolist()
+      return {
+        "sales_cur": int(r[sc]),
+        "sales_prev": int(r[sp]) if sp in r.index else None,
+        "yoy": float(r["pct_change"]),
+        "market_share": float(r["market_share"]),
+        "num_brands": len(brands_in_group),
+        "top_brands": ", ".join(brands_in_group[:3]),
+      }
+
+    ra, rb = get_group_row(ga, year), get_group_row(gb, year)
+    metrics = [
+      (f"Registrations {year}","sales_cur",lambda v: f"{v:,.0f}" if v else "—"),
+      (f"Registrations {year-1}","sales_prev",lambda v: f"{v:,.0f}" if v else "—"),
+      ("YoY Change","yoy",lambda v: f"{v:+.1f}%"),
+      ("Market share","market_share",lambda v: f"{v:.1f}%"),
+      ("Brands in group","num_brands",lambda v: str(v)),
+      ("Key brands","top_brands",lambda v: str(v)),
+    ]
+    render_comparison_table(ga, gb, ra, rb, metrics)
+
+    # Group share evolution mini chart
+    st.markdown("<br>", unsafe_allow_html=True)
+    gevo = D["grp_evo"]
+    fig_ge = go.Figure()
+    for grp, color in [(ga, BLUE), (gb, CORAL)]:
+      gdf = gevo[gevo["group"]==grp]
+      if len(gdf):
+        fig_ge.add_trace(go.Scatter(x=gdf["year"], y=gdf["market_share"],
+          name=grp, mode="lines+markers",
+          line=dict(color=color, width=2.5), marker=dict(size=7)))
+    fig_ge.update_layout(height=250, margin=dict(l=0,r=0,t=20,b=10),
+      yaxis=dict(title="Market share (%)",ticksuffix="%",gridcolor=LGRAY),
+      xaxis=dict(tickvals=list(range(2019,2026))),
+      legend=dict(orientation="h",y=-0.2),
+      paper_bgcolor="rgba(0,0,0,0)", plot_bgcolor="rgba(0,0,0,0)", font=dict(size=11))
+    st.plotly_chart(fig_ge, use_container_width=True)
+    st.markdown('<div class="data-note">Source: ACEA 2023-2025 confirmed · 2019-2022 estimates · EU+EFTA+UK</div>', unsafe_allow_html=True)
 
 # ── TAB 6: TECHNOLOGY ─────────────────────────────────────────────────────────
 with tabs[5]:
@@ -1224,15 +1331,20 @@ with tabs[9]:
     st.markdown(data_badge("mixed", "Analyst estimates based on ACEA trend data · Not investment advice"), unsafe_allow_html=True)
 
     fc1, fc2, fc3 = st.columns(3)
-    for col, (_, row) in zip([fc1, fc2, fc3], forecast.iterrows()):
+    # Values hardcoded to bypass @st.cache_data — EU+EFTA+UK base 13.27M (ACEA 2025)
+    _scenarios = [
+        ("PESSIMISTIC", "13.27M", "0.0", "17.4", "#D85A30"),
+        ("BASE CASE",   "13.60M", "+2.5", "21.5", "#185FA5"),
+        ("OPTIMISTIC",  "13.93M", "+5.0", "25.0", "#1D9E75"),
+    ]
+    for col, (label, vol, growth, bev, color) in zip([fc1, fc2, fc3], _scenarios):
         with col:
-            color = row["color"]
-            growth = row["growth_vs_2025"]
+            arrow = "▲" if "+" in growth else "▶"
             st.markdown(f"""
 <div style="background:#f9f9f9;border-radius:8px;padding:16px;border-left:4px solid {color};border:0.5px solid #e0e0e0">
-<div style="font-size:12px;color:#888;font-weight:600;text-transform:uppercase">{row["scenario"]}</div>
-<div style="font-size:24px;font-weight:700;color:#0d1b2a;margin-top:4px">{row.get("reg_2026_k", row.get("reg_2026_k_eu", 0))/1000:.2f}M</div>
-<div style="font-size:12px;color:{color};margin-top:2px">{'▲' if growth>0 else '▼'} {growth:+.1f}% vs 2025 · BEV {row["bev_share_2026"]:.1f}%</div>
+<div style="font-size:12px;color:#888;font-weight:600;text-transform:uppercase">{label}</div>
+<div style="font-size:24px;font-weight:700;color:#0d1b2a;margin-top:4px">{vol}</div>
+<div style="font-size:12px;color:{color};margin-top:2px">{arrow} {growth}% vs 2025 · BEV {bev}%</div>
 </div>""", unsafe_allow_html=True)
 
     st.markdown("<br>", unsafe_allow_html=True)
