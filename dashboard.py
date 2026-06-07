@@ -774,6 +774,7 @@ with tabs[3]:
         )
         fig.update_layout(height=280,
           margin=dict(l=0,r=0,t=40,b=10),
+          xaxis=dict(type="category", tickfont=dict(size=13)),
           yaxis=dict(tickformat=".2s", gridcolor=LGRAY),
           paper_bgcolor="rgba(0,0,0,0)", plot_bgcolor="rgba(0,0,0,0)",
           showlegend=False, font=dict(size=12))
@@ -1439,11 +1440,13 @@ A declining HHI signals increasing competition (new entrants, fragmentation).
             st.dataframe(pd.DataFrame(metrics_data), hide_index=True, use_container_width=True)
 
             # Visual HHI gauge
+            st.markdown("##### Brand HHI 2025 — market concentration score")
             fig_hhi = go.Figure(go.Indicator(
                 mode="gauge+number+delta",
                 value=hhi["brand_hhi_2025"],
-                delta={"reference": hhi["brand_hhi_2024"], "valueformat": ".0f"},
-                title={"text": "Brand HHI 2025"},
+                delta={"reference": hhi["brand_hhi_2024"], "valueformat": ".0f", "increasing": {"color": "#D85A30"}, "decreasing": {"color": "#1D9E75"}},
+                number={"font": {"size": 52}},
+                title={"text": ""},
                 gauge={
                     "axis": {"range": [0, 2000]},
                     "bar": {"color": BLUE},
@@ -1455,7 +1458,7 @@ A declining HHI signals increasing competition (new entrants, fragmentation).
                     "threshold": {"line": {"color": CORAL, "width": 2}, "value": 1000},
                 },
             ))
-            fig_hhi.update_layout(height=220, margin=dict(l=20,r=20,t=40,b=0),
+            fig_hhi.update_layout(height=240, margin=dict(l=20,r=20,t=10,b=0),
                 paper_bgcolor="rgba(0,0,0,0)")
             st.plotly_chart(fig_hhi, use_container_width=True)
 
